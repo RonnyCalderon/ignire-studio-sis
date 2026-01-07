@@ -1,98 +1,159 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { ChallengeCard } from '@/components/challenge-card';
+import { ChallengeSelection } from '@/components/challenge-selection';
+import { RewardCard } from '@/components/reward-card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { UserOnboarding } from '@/components/user-onboarding';
+import { useUser } from '@/context/user-provider';
+import { useWeeklyChallenge, type ChallengeCategory } from '@/hooks/use-weekly-challenge';
+import { quotes } from '@/lib/quotes';
+import { smartShuffle } from '@/lib/utils';
+import { RefreshCw } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function DashboardScreen() {
+  const { partnerName, userIsKnown } = useUser();
+  const { 
+    challenge, 
+    expiry, 
+    isCompleted, 
+    rewardExpiry, 
+    isLoading,
+    isStarted,
+    completeChallenge,
+    startNewChallenge,
+    resetChallenge,
+    resetChallengeState,
+    beginChallenge,
+  } = useWeeklyChallenge();
 
-export default function HomeScreen() {
+  const [refreshing, setRefreshing] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [dailyQuote, setDailyQuote] = useState<{ text: string; author: string } | null>(null);
+
+  useEffect(() => {
+    const loadQuote = async () => {
+        const quote = await smartShuffle('daily_quote', quotes);
+        setDailyQuote(quote);
+    };
+    loadQuote();
+  }, []);
+
+  const handleSelectCategory = async (category: ChallengeCategory) => {
+    await startNewChallenge(category);
+  };
+
+  const handleCompletePress = () => {
+    setShowConfirmation(true);
+  };
+
+  const confirmComplete = async () => {
+    setShowConfirmation(false);
+    await completeChallenge();
+  };
+
+  if (!userIsKnown) {
+     return <UserOnboarding />;
+  }
+
+  if (isLoading) {
+    return <View style={styles.container}><Text style={{marginTop: 50, textAlign:'center'}}>Loading...</Text></View>;
+  }
+
+  // PASSING QUOTE HERE
+  if (!isStarted) {
+    return (
+        <View style={styles.container}>
+            <ChallengeSelection onSelectCategory={handleSelectCategory} quote={dailyQuote} />
+        </View>
+    );
+  }
+
+  const now = Date.now();
+  const isRewardActive = isCompleted && rewardExpiry && now < rewardExpiry;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <>
+      <ScrollView 
+          style={styles.container} 
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); }} />}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>
+              {isRewardActive ? "Your Reward" : `Invitation for ${partnerName}`}
+          </Text>
+          {challenge && !isRewardActive && (
+              <Button variant="outline" size="icon" onPress={resetChallenge}>
+                  <RefreshCw size={16} color="#000" />
+              </Button>
+          )}
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {isRewardActive ? (
+            <RewardCard 
+              expiry={rewardExpiry} 
+              onRewardEnd={resetChallengeState} 
+              onNewChallengeClick={resetChallengeState} 
+            />
+        ) : (
+          challenge && (
+              <ChallengeCard 
+                  challenge={challenge}
+                  expiry={expiry}
+                  onStart={beginChallenge}
+                  onComplete={handleCompletePress}
+                  isCompleted={isCompleted}
+              />
+          )
+        )}
+      </ScrollView>
+
+      <AlertDialog open={showConfirmation} onOpenChange={setShowConfirmation}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Challenge Conquered!</AlertDialogTitle>
+            <AlertDialogDescription>
+              You've proven once again how deeply connected and adventurous you both are. 
+              Confirming this step unlocks your reward and continues your journey deeper. Are you ready?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onPress={() => setShowConfirmation(false)}>Not Yet</AlertDialogCancel>
+            <AlertDialogAction onPress={confirmComplete}>Claim Reward</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    padding: 20,
+    marginTop: 10,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FF5A5F', 
+    flex: 1,
   },
 });
