@@ -43,8 +43,15 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     const loadQuote = async () => {
-        const quote = await smartShuffle('daily_quote', quotes);
-        setDailyQuote(quote);
+        try {
+          // Guard against empty quotes
+          if (quotes && quotes.length > 0) {
+            const quote = await smartShuffle('daily_quote', quotes);
+            setDailyQuote(quote);
+          }
+        } catch (e) {
+          console.log("Error loading quote:", e);
+        }
     };
     loadQuote();
   }, []);
@@ -70,7 +77,6 @@ export default function DashboardScreen() {
     return <View style={styles.container}><Text style={{marginTop: 50, textAlign:'center'}}>Loading...</Text></View>;
   }
 
-  // PASSING QUOTE HERE
   if (!isStarted) {
     return (
         <View style={styles.container}>

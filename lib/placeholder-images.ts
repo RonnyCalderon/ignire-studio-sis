@@ -10,4 +10,6 @@ export const placeholderImages: ImagePlaceholder[] = [
     { imageUrl: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=600', description: 'Couple laughing', imageHint: 'couple fun' },
     { imageUrl: 'https://images.unsplash.com/photo-1494774155065-646be4b069ed?q=80&w=600', description: 'Intimate moment', imageHint: 'couple sexy' },
     { imageUrl: 'https://images.unsplash.com/photo-1621090332822-261882d41b55?q=80&w=600', description: 'Adventure', imageHint: 'couple adventurous' },
+    // NEW: Added Gift Image
+    { imageUrl: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?q=80&w=600', description: 'Gift Box', imageHint: 'gift' }
 ];
