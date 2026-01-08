@@ -7,21 +7,8 @@ import Card from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { 
-    Flame, Lock, Trophy, Award, Footprints, Gem, Heart, KeyRound, Sparkles, Users, Wind 
-} from 'lucide-react-native';
+import { Flame, Lock, Trophy, Award } from 'lucide-react-native';
 import { format } from 'date-fns';
-
-const iconMap: { [key: string]: React.ComponentType<any> } = {
-    Sparkles,
-    Wind,
-    Footprints,
-    Heart,
-    KeyRound,
-    Gem,
-    Users,
-    Award, 
-};
 
 // --- Gamification Logic ---
 const getCurrentLevel = (completedCount: number): [Level | null, Level | null] => {
@@ -47,13 +34,29 @@ const getChallengesForLevel = (level: Level, history: any[]) => {
 };
 
 // --- Helper Components ---
-const LevelIcon = ({ level, isLocked }: { level: Level, isLocked?: boolean }) => {
+const LevelIcon = ({ level, isLocked }: { level: Level | null | undefined, isLocked?: boolean }) => {
     const primary = useThemeColor({}, 'primary');
     const border = useThemeColor({}, 'border');
-    const Icon = isLocked ? Lock : iconMap[level.icon];
+    
+    // Default fallback
+    let IconComponent = Award; 
+
+    if (isLocked) {
+        IconComponent = Lock;
+    } else if (level && level.icon) {
+        IconComponent = level.icon;
+    }
+
+    // Handle primary color safely
+    const safePrimary = primary || '#000000';
+    // Only append alpha if it's a hex code
+    const backgroundColor = isLocked ? 'transparent' : safePrimary; 
+    const borderColor = isLocked ? border : safePrimary;
+    const iconColor = isLocked ? border : '#FFFFFF'; 
+
     return (
-        <View style={[styles.levelIcon, { backgroundColor: isLocked ? 'transparent' : `${primary}20`, borderColor: isLocked ? border : primary }]}>
-            <Icon size={18} color={isLocked ? border : primary} />
+        <View style={[styles.levelIcon, { backgroundColor, borderColor }]}>
+            <IconComponent size={18} color={iconColor} />
         </View>
     )
 }
