@@ -1,24 +1,37 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Animated, StyleSheet, Easing } from 'react-native';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Button from '@/components/ui/button';
+import Card from '@/components/ui/card';
 import { Dices, RefreshCw, Sparkles } from 'lucide-react-native';
 import { actions, bodyParts } from '@/lib/love-dice';
 import { smartShuffle } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 export function PositionDiceGame() {
   const [result, setResult] = useState<{ action: string; bodyPart: string } | null>(null);
   const [isRolling, setIsRolling] = useState(false);
-  
+
   const spinValue = useRef(new Animated.Value(0)).current;
   const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const primaryColor = useThemeColor({}, 'primary');
+  const textColor = useThemeColor({}, 'text');
+  const subTextColor = useThemeColor({ light: '#666', dark: '#999' }, 'text');
+  const cardBackgroundColor = useThemeColor({}, 'card');
+  const iconContainerBackgroundColor = useThemeColor({ light: '#fff1f2', dark: '#2A2525' }, 'background');
+  const dieBackgroundColor = useThemeColor({ light: '#f8fafc', dark: '#1E1E1E' }, 'background');
+  const dieBorderColor = useThemeColor({ light: '#e2e8f0', dark: '#333' }, 'border');
+  const dieValueColor = useThemeColor({ light: '#1e293b', dark: '#fff' }, 'text');
+  const resultContainerBackgroundColor = useThemeColor({ light: '#fffbeb', dark: '#2A2525' }, 'background');
+  const resultContainerBorderColor = useThemeColor({ light: '#fcd34d', dark: '#F59E0B' }, 'border');
+  const resultTextColor = useThemeColor({ light: '#b45309', dark: '#F59E0B' }, 'text');
+
 
   const rollDice = async () => {
     if (isRolling) return;
     setIsRolling(true);
-    
-    // Haptic feedback start
+
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     spinValue.setValue(0);
@@ -42,7 +55,6 @@ export function PositionDiceGame() {
     setTimeout(() => {
       setResult({ action, bodyPart });
       setIsRolling(false);
-      // Success haptic
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, 800);
   };
@@ -54,66 +66,71 @@ export function PositionDiceGame() {
 
   return (
     <Card>
-      <CardHeader style={{ alignItems: 'center', paddingBottom: 10 }}>
-        <View style={styles.iconContainer}>
-          <Dices size={32} color="#FF5A5F" />
-        </View>
-        <CardTitle>Love Dice</CardTitle>
-        <Text style={styles.subtitle}>Roll to decide your next move...</Text>
-      </CardHeader>
-      
-      <CardContent style={{ alignItems: 'center', gap: 24 }}>
-        <View style={styles.diceContainer}>
-            <Animated.View style={[styles.die, { transform: [{ rotate: spin }, { scale: scaleValue }] }]}>
-                <Text style={styles.dieLabel}>ACTION</Text>
-                <Text style={styles.dieValue}>
-                    {isRolling ? "..." : result?.action || "?"}
-                </Text>
-            </Animated.View>
-
-            <Animated.View style={[styles.die, { transform: [{ rotate: spin }, { scale: scaleValue }], backgroundColor: '#fef2f2', borderColor: '#FF5A5F' }]}>
-                <Text style={[styles.dieLabel, { color: '#FF5A5F' }]}>BODY PART</Text>
-                <Text style={[styles.dieValue, { color: '#FF5A5F' }]}>
-                    {isRolling ? "..." : result?.bodyPart || "?"}
-                </Text>
-            </Animated.View>
+        <View style={{ alignItems: 'center', padding: 20, paddingTop: 30 }}>
+            <View style={[styles.iconContainer, { backgroundColor: iconContainerBackgroundColor }]}>
+              <Dices size={32} color={primaryColor} />
+            </View>
+            <Text style={[styles.title, { color: textColor }]}>Love Dice</Text>
+            <Text style={[styles.subtitle, { color: subTextColor }]}>Roll to decide your next move...</Text>
         </View>
 
-        {result && !isRolling && (
-           <View style={styles.resultContainer}>
-              <Sparkles size={20} color="#F59E0B" />
-              <Text style={styles.resultText}>
-                 {result.action} the {result.bodyPart}
-              </Text>
-              <Sparkles size={20} color="#F59E0B" />
-           </View>
-        )}
+        <View style={{ alignItems: 'center', gap: 24, padding: 20 }}>
+            <View style={styles.diceContainer}>
+                <Animated.View style={[styles.die, { backgroundColor: dieBackgroundColor, borderColor: dieBorderColor, transform: [{ rotate: spin }, { scale: scaleValue }] }]}>
+                    <Text style={styles.dieLabel}>ACTION</Text>
+                    <Text style={[styles.dieValue, { color: dieValueColor }]}>
+                        {isRolling ? "..." : result?.action || "?"}
+                    </Text>
+                </Animated.View>
 
-        <Button onPress={rollDice} disabled={isRolling} size="lg" style={{ width: '100%' }}>
-            {isRolling ? (
-                <Text style={{color: 'white'}}>Rolling...</Text>
-            ) : (
-                <>
-                  <RefreshCw size={20} color="white" style={{ marginRight: 8 }} />
-                  <Text style={{color: 'white', fontWeight: 'bold'}}>Roll Dice</Text>
-                </>
+                <Animated.View style={[styles.die, { backgroundColor: iconContainerBackgroundColor, borderColor: primaryColor, transform: [{ rotate: spin }, { scale: scaleValue }] }]}>
+                    <Text style={[styles.dieLabel, { color: primaryColor }]}>BODY PART</Text>
+                    <Text style={[styles.dieValue, { color: primaryColor }]}>
+                        {isRolling ? "..." : result?.bodyPart || "?"}
+                    </Text>
+                </Animated.View>
+            </View>
+
+            {result && !isRolling && (
+               <View style={[styles.resultContainer, { backgroundColor: resultContainerBackgroundColor, borderColor: resultContainerBorderColor }]}>
+                  <Sparkles size={20} color="#F59E0B" />
+                  <Text style={[styles.resultText, { color: resultTextColor }]}>
+                     {result.action} the {result.bodyPart}
+                  </Text>
+                  <Sparkles size={20} color="#F59E0B" />
+               </View>
             )}
-        </Button>
-      </CardContent>
+
+            <Button onPress={rollDice} disabled={isRolling} style={{ width: '100%' }}>
+                {isRolling ? (
+                    <Text>Rolling...</Text>
+                ) : (
+                    <>
+                      <RefreshCw size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <Text style={{fontWeight: 'bold'}}>Roll Dice</Text>
+                    </>
+                )}
+            </Button>
+        </View>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   iconContainer: {
-    backgroundColor: '#fff1f2',
     padding: 12,
     borderRadius: 50,
     marginBottom: 8,
   },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Playfair-Display',
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
   subtitle: {
-    color: '#666',
     fontSize: 14,
+    fontFamily: 'PT-Sans',
   },
   diceContainer: {
     flexDirection: 'row',
@@ -124,12 +141,10 @@ const styles = StyleSheet.create({
   die: {
     width: 140,
     height: 140,
-    backgroundColor: '#f8fafc',
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#e2e8f0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -142,27 +157,26 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     marginBottom: 8,
     letterSpacing: 1,
+    fontFamily: 'PT-Sans',
   },
   dieValue: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#1e293b',
     textAlign: 'center',
+    fontFamily: 'Playfair-Display',
   },
   resultContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fffbeb',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 50,
     borderWidth: 1,
-    borderColor: '#fcd34d',
   },
   resultText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#b45309',
+    fontFamily: 'PT-Sans',
   }
 });

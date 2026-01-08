@@ -1,14 +1,15 @@
 import { HapticTab } from '@/components/haptic-tab';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { Tabs } from 'expo-router';
 import { Gamepad2, Home, Trophy, User } from 'lucide-react-native';
 import React from 'react';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const activeColor = '#FF5A5F'; // Brand color
-  const inactiveColor = '#9ca3af';
+  const activeColor = useThemeColor({}, 'primary');
+  const inactiveColor = useThemeColor({}, 'mutedForeground');
+  const tabBackgroundColor = useThemeColor({}, 'card');
+  const tabBorderColor = useThemeColor({}, 'border');
 
   return (
     <Tabs
@@ -17,10 +18,12 @@ export default function TabLayout() {
         tabBarInactiveTintColor: inactiveColor,
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarStyle: Platform.select({
-          ios: { position: 'absolute' },
-          default: {},
-        }),
+        tabBarStyle: {
+          backgroundColor: tabBackgroundColor,
+          borderTopColor: tabBorderColor,
+          // The absolute positioning is required for the blur effect on iOS.
+          ...(Platform.OS === 'ios' && { position: 'absolute' }),
+        },
       }}>
       <Tabs.Screen
         name="index"

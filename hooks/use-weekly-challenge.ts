@@ -11,6 +11,8 @@ const HISTORY_KEY = 'challengeHistory';
 
 export type ChallengeCategory = 'love' | 'adventurous' | 'sexy';
 
+export type ChallengeHistoryItem = Challenge & { completedAt: number };
+
 export interface WeeklyChallengeState {
   challenge: Challenge | null;
   expiry: number | null;
@@ -21,19 +23,30 @@ export interface WeeklyChallengeState {
 
 export function useWeeklyChallenge() {
   const { partnerName } = useUser();
-  const [state, setState] = useState<WeeklyChallengeState & { isLoading: boolean }>({
+  const [state, setState] = useState<WeeklyChallengeState & { isLoading: boolean; history: ChallengeHistoryItem[] }>({
     challenge: null,
     expiry: null,
     isCompleted: false,
     rewardExpiry: null,
     isStarted: false,
     isLoading: true,
+    history: [],
   });
 
   const persistState = async (newState: WeeklyChallengeState) => {
       try {
           await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
       } catch (e) { console.error(e); }
+  };
+  
+  const loadHistory = async (): Promise<ChallengeHistoryItem[]> => {
+    try {
+        const historyJSON = await AsyncStorage.getItem(HISTORY_KEY);
+        return historyJSON ? JSON.parse(historyJSON) : [];
+    } catch (e) {
+        console.error("Failed to load history", e);
+        return [];
+    }
   };
 
   const resetChallengeState = useCallback(async () => {
@@ -45,12 +58,13 @@ export function useWeeklyChallenge() {
         isStarted: false 
     };
     await persistState(resetState);
-    setState({ ...resetState, isLoading: false });
+    setState(s => ({ ...s, ...resetState, isLoading: false }));
   }, []);
 
   const loadState = useCallback(async () => {
     try {
         const storedStateJSON = await AsyncStorage.getItem(STORAGE_KEY);
+        const challengeHistory = await loadHistory();
         const now = Date.now();
 
         if (storedStateJSON) {
@@ -61,16 +75,18 @@ export function useWeeklyChallenge() {
           const isRewardActive = storedState.isCompleted && storedState.rewardExpiry && now < storedState.rewardExpiry;
 
           if (isChallengeSelected || isChallengeRunning || isRewardActive) {
-              setState({ ...storedState, isLoading: false });
+              setState({ ...storedState, history: challengeHistory, isLoading: false });
           } else {
               await resetChallengeState();
+              setState(s => ({...s, history: challengeHistory }));
           }
         } else {
-            setState(s => ({ ...s, isLoading: false, isStarted: false }));
+            setState(s => ({ ...s, isLoading: false, isStarted: false, history: challengeHistory }));
         }
     } catch (e) {
         console.error(e);
-        setState(s => ({ ...s, isLoading: false }));
+        const challengeHistory = await loadHistory();
+        setState(s => ({ ...s, isLoading: false, history: challengeHistory }));
     }
   }, [resetChallengeState]);
 
@@ -91,7 +107,7 @@ export function useWeeklyChallenge() {
         isStarted: true,
       };
       await persistState(newState);
-      setState({ ...newState, isLoading: false });
+      setState(s => ({ ...s, ...newState, isLoading: false }));
     } catch (error) {
       console.error("Failed to generate challenge:", error);
       resetChallengeState();
@@ -107,7 +123,7 @@ export function useWeeklyChallenge() {
       expiry: newExpiry,
     };
     await persistState(runningState);
-    setState({ ...runningState, isLoading: false });
+    setState(s => ({...s, ...runningState, isLoading: false }));
   }, [state]);
 
   const completeChallenge = useCallback(async () => {
@@ -123,12 +139,11 @@ export function useWeeklyChallenge() {
     
     await persistState(completedState);
 
-    const historyJSON = await AsyncStorage.getItem(HISTORY_KEY);
-    const history = historyJSON ? JSON.parse(historyJSON) : [];
-    const newHistory = [{ challenge: state.challenge, completedAt: now }, ...history];
+    const newHistoryItem: ChallengeHistoryItem = { ...state.challenge, completedAt: now };
+    const newHistory = [newHistoryItem, ...state.history];
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
     
-    setState({ ...completedState, isLoading: false });
+    setState(s => ({...s, ...completedState, history: newHistory, isLoading: false }));
   }, [state]);
 
   const resetChallenge = useCallback(() => {

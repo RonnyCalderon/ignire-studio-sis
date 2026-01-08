@@ -1,16 +1,20 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions, Animated, Platform } from 'react-native';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Gift, Clock, Star, Sparkles } from 'lucide-react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, useWindowDimensions, Animated } from 'react-native';
+import Card from '@/components/ui/card';
+import Button from '@/components/ui/button';
+import { Gift, Clock, Star } from 'lucide-react-native';
 import { rewards } from '@/lib/data';
 import { placeholderImages } from '@/lib/placeholder-images';
 import { smartShuffle } from '@/lib/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfettiCannon from 'react-native-confetti-cannon';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
 const Countdown = ({ expiry, onEnd }: { expiry: number, onEnd: () => void }) => {
     const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+    const textColor = useThemeColor({}, 'text');
+    const mutedForeground = useThemeColor({}, 'mutedForeground');
+    const borderColor = useThemeColor({}, 'border');
 
     useEffect(() => {
         if (!expiry) return;
@@ -38,18 +42,18 @@ const Countdown = ({ expiry, onEnd }: { expiry: number, onEnd: () => void }) => 
     return (
         <View style={styles.countdownContainer}>
             <View style={styles.timeBlock}>
-                <Text style={styles.timeValue}>{String(timeLeft.hours).padStart(2, '0')}</Text>
-                <Text style={styles.timeLabel}>Hours</Text>
+                <Text style={[styles.timeValue, { color: textColor }]}>{String(timeLeft.hours).padStart(2, '0')}</Text>
+                <Text style={[styles.timeLabel, { color: mutedForeground }]}>Hours</Text>
             </View>
-            <View style={styles.timeDivider}>:</View>
+            <Text style={[styles.timeDivider, { color: borderColor }]}>:</Text>
             <View style={styles.timeBlock}>
-                <Text style={styles.timeValue}>{String(timeLeft.minutes).padStart(2, '0')}</Text>
-                <Text style={styles.timeLabel}>Minutes</Text>
+                <Text style={[styles.timeValue, { color: textColor }]}>{String(timeLeft.minutes).padStart(2, '0')}</Text>
+                <Text style={[styles.timeLabel, { color: mutedForeground }]}>Minutes</Text>
             </View>
-            <View style={styles.timeDivider}>:</View>
+            <Text style={[styles.timeDivider, { color: borderColor }]}>:</Text>
             <View style={styles.timeBlock}>
-                <Text style={styles.timeValue}>{String(timeLeft.seconds).padStart(2, '0')}</Text>
-                <Text style={styles.timeLabel}>Seconds</Text>
+                <Text style={[styles.timeValue, { color: textColor }]}>{String(timeLeft.seconds).padStart(2, '0')}</Text>
+                <Text style={[styles.timeLabel, { color: mutedForeground }]}>Seconds</Text>
             </View>
         </View>
     );
@@ -57,6 +61,8 @@ const Countdown = ({ expiry, onEnd }: { expiry: number, onEnd: () => void }) => 
 
 const StarRating = ({ reward }: { reward: string }) => {
     const [rating, setRating] = useState(0);
+    const accentColor = useThemeColor({}, 'accent');
+    const borderColor = useThemeColor({}, 'border');
 
     useEffect(() => {
         const loadRating = async () => {
@@ -85,8 +91,8 @@ const StarRating = ({ reward }: { reward: string }) => {
                 <TouchableOpacity key={i} onPress={() => handleRate(i + 1)} activeOpacity={0.7}>
                     <Star
                         size={32}
-                        color={rating > i ? "#Facc15" : "#e5e7eb"}
-                        fill={rating > i ? "#Facc15" : "transparent"}
+                        color={rating > i ? accentColor : borderColor}
+                        fill={rating > i ? accentColor : "transparent"}
                         style={styles.star}
                     />
                 </TouchableOpacity>
@@ -102,7 +108,14 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
     const confettiRef = useRef<ConfettiCannon>(null);
     const [isLoading, setIsLoading] = useState(true);
     
-    // Animation Values for "animate-in fade-in-50 zoom-in-90"
+    const primaryColor = useThemeColor({}, 'primary');
+    const primaryForeground = useThemeColor({}, 'primaryForeground');
+    const mutedColor = useThemeColor({}, 'muted');
+    const borderColor = useThemeColor({}, 'border');
+    const mutedForeground = useThemeColor({}, 'mutedForeground');
+    const secondaryForeground = useThemeColor({}, 'secondaryForeground');
+    const cardColor = useThemeColor({}, 'card');
+
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
@@ -115,7 +128,6 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                 const img = placeholderImages.find(p => p.imageHint.includes('gift')) || placeholderImages[0];
                 setRewardImage(img ? img.imageUrl : 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48');
 
-                // Start Entry Animation
                 Animated.parallel([
                     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
                     Animated.spring(scaleAnim, { toValue: 1, friction: 8, tension: 40, useNativeDriver: true })
@@ -137,26 +149,15 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
     if (isLoading) {
         return (
             <View style={{ height: 300, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#FF5A5F" />
+                <ActivityIndicator size="large" color={primaryColor} />
             </View>
         );
     }
 
     return (
-        <View style={styles.container}>
-            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 50 }} pointerEvents="none">
-                 <ConfettiCannon 
-                    count={200} 
-                    origin={{x: width / 2, y: -20}} 
-                    autoStart={false} 
-                    ref={confettiRef} 
-                    fadeOut={true}
-                    fallSpeed={3000}
-                />
-            </View>
-
-            <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }], width: '100%', alignItems: 'center' }}>
-                <Card style={styles.card}>
+        <View style={styles.container} collapsable={false}>
+            <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }], width: '100%', alignItems: 'center', zIndex: 1 }}>
+                <Card style={[styles.card, { shadowColor: primaryColor }]}>
                     <View style={styles.headerContainer}>
                         <Image
                             source={{ uri: rewardImage! }}
@@ -167,34 +168,45 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                         
                         <View style={styles.headerContentOverlay}>
                             <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4}}>
-                                <Gift size={28} color="#fff" style={{ marginRight: 8 }} />
+                                <Gift size={28} color="#FFD700" style={{ marginRight: 8 }} />
                                 <Text style={styles.headerSubtitle}>CONGRATULATIONS!</Text>
                             </View>
-                            <Text style={styles.headerTitle}>Reward Unlocked</Text>
+                            <Text style={[styles.headerTitle, { color: primaryForeground }]}>Reward Unlocked</Text>
                         </View>
                     </View>
 
-                    <CardContent style={styles.content}>
-                        <Text style={styles.rewardText}>"{reward}"</Text>
+                    <View style={styles.content}>
+                        <Text style={[styles.rewardText, { color: primaryColor }]}>"{reward}"</Text>
                         
-                        <View style={styles.timerSection}>
+                        <View style={[styles.timerSection, { backgroundColor: mutedColor, borderColor: borderColor }]}>
                             <View style={styles.timerHeader}>
-                                <Clock size={16} color="#ef4444" style={{ marginRight: 6 }} />
-                                <Text style={styles.timerLabel}>Claim it before it expires!</Text>
+                                <Clock size={16} color={primaryColor} style={{ marginRight: 6 }} />
+                                <Text style={[styles.timerLabel, { color: primaryColor }]}>Claim it before it expires!</Text>
                             </View>
                             <Countdown expiry={expiry} onEnd={onRewardEnd} />
                         </View>
-                    </CardContent>
+                    </View>
 
-                    <CardFooter style={styles.footer}>
-                        <Text style={styles.footerLabel}>How much did you enjoy this reward?</Text>
+                    <View style={[styles.footer, { backgroundColor: cardColor, borderTopColor: borderColor }]}>
+                        <Text style={[styles.footerLabel, { color: mutedForeground }]}>How much did you enjoy this reward?</Text>
                         <StarRating reward={reward || ''} />
-                        <Button onPress={onNewChallengeClick} style={styles.button} size="lg" variant="secondary">
-                            <Text style={styles.buttonText}>Start New Challenge</Text>
+                        <Button onPress={onNewChallengeClick} variant="secondary">
+                            <Text style={{ color: secondaryForeground }}>Start New Challenge</Text>
                         </Button>
-                    </CardFooter>
+                    </View>
                 </Card>
             </Animated.View>
+
+            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }} pointerEvents="none">
+                <ConfettiCannon 
+                    count={200} 
+                    origin={{x: width / 2, y: -20}} 
+                    autoStart={false} 
+                    ref={confettiRef} 
+                    fadeOut={true}
+                    fallSpeed={3000}
+                />
+            </View>
         </View>
     );
 }
@@ -208,19 +220,17 @@ const styles = StyleSheet.create({
     },
     card: {
         width: '100%',
-        maxWidth: 768, // Matching max-w-3xl
+        maxWidth: 768,
         overflow: 'hidden',
         borderWidth: 0,
-        backgroundColor: '#fff',
         borderRadius: 16,
-        shadowColor: "#FF5A5F",
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.15,
         shadowRadius: 20,
         elevation: 10,
     },
     headerContainer: {
-        height: 256, // Matching h-64
+        height: 256,
         width: '100%',
         position: 'relative',
     },
@@ -231,7 +241,6 @@ const styles = StyleSheet.create({
     imageOverlay: {
         ...StyleSheet.absoluteFillObject,
         backgroundColor: 'rgba(0,0,0,0.3)',
-        // Gradient simulation can be done with LinearGradient if installed, using simple overlay for now
     },
     headerContentOverlay: {
         position: 'absolute',
@@ -245,6 +254,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#FFD700',
         letterSpacing: 1,
+        fontFamily: 'PT-Sans',
     },
     headerTitle: {
         fontSize: 32,
@@ -253,6 +263,7 @@ const styles = StyleSheet.create({
         textShadowColor: 'rgba(0, 0, 0, 0.5)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,
+        fontFamily: 'Playfair-Display',
     },
     content: {
         alignItems: 'center',
@@ -262,20 +273,18 @@ const styles = StyleSheet.create({
     rewardText: {
         fontSize: 26,
         fontWeight: '700',
-        color: '#FF5A5F',
         textAlign: 'center',
         marginBottom: 32,
         lineHeight: 36,
         fontStyle: 'italic',
+        fontFamily: 'Playfair-Display',
     },
     timerSection: {
         alignItems: 'center',
-        backgroundColor: '#fff1f2',
         padding: 16,
         borderRadius: 12,
         width: '100%',
         borderWidth: 1,
-        borderColor: '#fecaca',
     },
     timerHeader: {
         flexDirection: 'row',
@@ -285,9 +294,9 @@ const styles = StyleSheet.create({
     timerLabel: {
         fontSize: 12,
         fontWeight: '700',
-        color: '#ef4444',
         textTransform: 'uppercase',
         letterSpacing: 1,
+        fontFamily: 'PT-Sans',
     },
     countdownContainer: {
         flexDirection: 'row',
@@ -301,34 +310,31 @@ const styles = StyleSheet.create({
     timeValue: {
         fontSize: 28,
         fontWeight: '800',
-        color: '#1a1a1a',
         fontVariant: ['tabular-nums'],
+        fontFamily: 'Playfair-Display',
     },
     timeLabel: {
         fontSize: 10,
-        color: '#6b7280',
         textTransform: 'uppercase',
         marginTop: 4,
         fontWeight: '600',
+        fontFamily: 'PT-Sans',
     },
     timeDivider: {
         fontSize: 28,
         fontWeight: '800',
-        color: '#d1d5db',
         marginTop: -15,
     },
     footer: {
-        backgroundColor: '#f9fafb',
         padding: 24,
         alignItems: 'center',
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
     },
     footerLabel: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6b7280',
         marginBottom: 12,
+        fontFamily: 'PT-Sans',
     },
     starContainer: {
         flexDirection: 'row',
@@ -341,15 +347,4 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 1,
     },
-    button: {
-        width: '100%',
-        backgroundColor: '#f3f4f6', // secondary variant style
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1f2937', // secondary text color
-    }
 });

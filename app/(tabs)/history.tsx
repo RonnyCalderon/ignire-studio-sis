@@ -1,22 +1,33 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, RefreshControl } from "react-native";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { AccordionItem } from "@/components/ui/accordion";
-import { Trophy, Flame } from "lucide-react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { levels, type Level } from "@/lib/levels";
-import { useUser } from "@/context/user-provider";
+import { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useUser } from '@/context/user-provider';
+import { useWeeklyChallenge } from '@/hooks/use-weekly-challenge';
+import { levels, type Level } from '@/lib/levels';
+import Card from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Progress } from '@/components/ui/progress';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { 
+    Flame, Lock, Trophy, Award, Footprints, Gem, Heart, KeyRound, Sparkles, Users, Wind 
+} from 'lucide-react-native';
+import { format } from 'date-fns';
 
-interface CompletedChallenge {
-    challenge: any;
-    completedAt: number;
-}
+const iconMap: { [key: string]: React.ComponentType<any> } = {
+    Sparkles,
+    Wind,
+    Footprints,
+    Heart,
+    KeyRound,
+    Gem,
+    Users,
+    Award, 
+};
 
-const getCurrentLevel = (completedCount: number) => {
+// --- Gamification Logic ---
+const getCurrentLevel = (completedCount: number): [Level | null, Level | null] => {
     const sortedLevels = [...levels].sort((a, b) => a.threshold - b.threshold);
-    let currentLevel = null;
-    let nextLevel = null;
+    let currentLevel: Level | null = null;
+    let nextLevel: Level | null = null;
 
     for (let i = 0; i < sortedLevels.length; i++) {
         if (completedCount >= sortedLevels[i].threshold) {
@@ -29,116 +40,194 @@ const getCurrentLevel = (completedCount: number) => {
     return [currentLevel, nextLevel];
 };
 
+const getChallengesForLevel = (level: Level, history: any[]) => {
+    const levelIndex = levels.findIndex(l => l.level === level.level);
+    const prevLevelThreshold = levelIndex > 0 ? levels[levelIndex - 1].threshold : 0;
+    return history.slice(prevLevelThreshold, level.threshold).filter(challenge => challenge.text && challenge.text.trim() !== '');
+};
+
+// --- Helper Components ---
+const LevelIcon = ({ level, isLocked }: { level: Level, isLocked?: boolean }) => {
+    const primary = useThemeColor({}, 'primary');
+    const border = useThemeColor({}, 'border');
+    const Icon = isLocked ? Lock : iconMap[level.icon];
+    return (
+        <View style={[styles.levelIcon, { backgroundColor: isLocked ? 'transparent' : `${primary}20`, borderColor: isLocked ? border : primary }]}>
+            <Icon size={18} color={isLocked ? border : primary} />
+        </View>
+    )
+}
+
+const RankCard = ({ level, progress, progressText }: { level: Level, progress: number, progressText: string }) => {
+    const text = useThemeColor({}, 'text');
+    const muted = useThemeColor({}, 'mutedForeground');
+    const primary = useThemeColor({}, 'primary');
+    
+    return (
+        <Card style={styles.rankCard} variant="outline">
+            <Text style={[styles.rankLabel, { color: primary }]}>Current Rank</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <LevelIcon level={level} />
+                <Text style={[styles.levelTitle, { color: primary }]}>{level.title}</Text>
+            </View>
+            <Text style={[styles.levelDescription, { color: muted }]}>{level.description}</Text>
+            <View style={{ marginTop: 16 }}>
+                <Progress value={progress} style={{ height: 6, marginBottom: 6 }} />
+                <Text style={[styles.progressText, { color: text }]}>{progressText}</Text>
+            </View>
+        </Card>
+    )
+}
+
 export default function HistoryScreen() {
     const { userName, partnerName } = useUser();
-    const [history, setHistory] = useState<CompletedChallenge[]>([]);
-    const [refreshing, setRefreshing] = useState(false);
+    const { history } = useWeeklyChallenge();
+    const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
-    const loadHistory = useCallback(async () => {
-        try {
-            const storedHistory = await AsyncStorage.getItem('challengeHistory');
-            if (storedHistory) {
-                const parsedHistory = JSON.parse(storedHistory);
-                setHistory(parsedHistory.sort((a: any, b: any) => b.completedAt - a.completedAt)); // Newest first
-            }
-        } catch (e) { console.error(e); }
-    }, []);
+    const textColor = useThemeColor({}, 'text');
+    const mutedColor = useThemeColor({}, 'mutedForeground');
+    const destructiveColor = useThemeColor({}, 'destructive');
+    const primaryColor = useThemeColor({}, 'primary');
 
-    useEffect(() => {
-        loadHistory();
-    }, [loadHistory]);
+    const { completedCount, currentLevel, nextLevel, unlockedLevels, lockedLevels, sortedHistory } = useMemo(() => {
+        const completedCount = history.filter(item => item.text && item.text.trim() !== '').length;
+        const sorted = [...history].sort((a, b) => a.completedAt - b.completedAt);
+        const [current, next] = getCurrentLevel(completedCount);
+        const unlocked = current ? levels.filter(l => l.threshold <= current.threshold) : [];
+        const locked = next ? levels.filter(l => l.threshold > (current?.threshold ?? 0)) : [];
+        return { completedCount, currentLevel: current, nextLevel: next, unlockedLevels: unlocked, lockedLevels: locked, sortedHistory: sorted };
+    }, [history]);
 
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadHistory();
-        setRefreshing(false);
-    };
+    if (!currentLevel) {
+        return (
+            <ScrollView style={styles.page} contentContainerStyle={styles.container}>
+                <View style={[styles.header, { alignItems: 'center'}]}>
+                    <Text style={[styles.headerTitle, { color: textColor }]}>Your Journey Begins</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedColor }]}>Complete your first challenge to unlock your rank.</Text>
+                </View>
+            </ScrollView>
+        )
+    }
 
-    const completedCount = history.length;
-    const [currentLevel, nextLevel] = getCurrentLevel(completedCount);
-    
-    // @ts-ignore
-    const progress = nextLevel && currentLevel 
-        // @ts-ignore
-        ? ((completedCount - (currentLevel.threshold - 1)) / (nextLevel.threshold - (currentLevel.threshold - 1))) * 100
-        : completedCount > 0 ? 100 : 0;
+    const progressPercent = nextLevel 
+        ? ((completedCount - currentLevel.threshold) / (nextLevel.threshold - currentLevel.threshold)) * 100
+        : 100;
+
+    const progressText = nextLevel 
+        ? `Progress to ${nextLevel.title}: ${completedCount} / ${nextLevel.threshold}`
+        : "You've reached the highest level!";
 
     return (
-        <ScrollView 
-            style={{ flex: 1, backgroundColor: '#f9f9f9' }} 
-            contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-            <View style={{ marginBottom: 24, marginTop: 10 }}>
-                <Text style={{ fontSize: 32, fontWeight: '800', color: '#1a1a1a' }}>Our Journey</Text>
-                <Text style={{ fontSize: 16, color: '#666' }}>{userName} & {partnerName}'s shared adventures.</Text>
+        <ScrollView style={styles.page} contentContainerStyle={styles.container}>
+            <View style={styles.header}>
+                <Text style={[styles.headerTitle, { color: textColor }]}>{userName} & {partnerName}'s Journey</Text>
+                <Text style={[styles.headerSubtitle, { color: mutedColor }]}>A record of our shared adventures and growth.</Text>
             </View>
 
-            {/* Current Level Card */}
-            {currentLevel && (
-                <Card style={{ marginBottom: 24, borderColor: '#FF5A5F', borderWidth: 1 }}>
-                    <CardHeader style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-                         {/* @ts-ignore - Icon handling in RN */}
-                        <currentLevel.icon size={48} color="#FF5A5F" />
-                        <View>
-                            <Text style={{ fontSize: 12, color: '#666', textTransform: 'uppercase', letterSpacing: 1 }}>Current Rank</Text>
-                            {/* @ts-ignore */}
-                            <CardTitle style={{ color: '#FF5A5F', fontSize: 24 }}>{currentLevel.title}</CardTitle>
-                        </View>
-                    </CardHeader>
-                    <CardContent>
-                        {/* @ts-ignore */}
-                        <Text style={{ fontStyle: 'italic', color: '#444', marginBottom: 16 }}>"{currentLevel.description}"</Text>
-                        
-                        {nextLevel ? (
-                            <View>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                                    {/* @ts-ignore */}
-                                    <Text style={{ fontSize: 12, color: '#666' }}>Next: <Text style={{ fontWeight: 'bold' }}>{nextLevel.title}</Text></Text>
-                                    {/* @ts-ignore */}
-                                    <Text style={{ fontSize: 12, fontWeight: 'bold' }}>{completedCount} / {nextLevel.threshold}</Text>
-                                </View>
-                                <Progress value={progress} />
-                            </View>
-                        ) : (
-                             <Text style={{ textAlign: 'center', fontWeight: 'bold', color: '#FF5A5F' }}>Max Level Reached!</Text>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
+            <RankCard level={currentLevel} progress={progressPercent} progressText={progressText} />
 
-            {/* Completed Log */}
-            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12, color: '#1a1a1a' }}>History Log</Text>
-            
-            {history.length === 0 ? (
-                <Card style={{ padding: 32, alignItems: 'center' }}>
-                    <Trophy size={48} color="#d1d5db" style={{ marginBottom: 16 }} />
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: '#666' }}>No adventures yet</Text>
-                    <Text style={{ textAlign: 'center', color: '#999', marginTop: 4 }}>Complete a weekly challenge to start your history.</Text>
-                </Card>
-            ) : (
-                <View>
-                    {history.map((item, index) => (
-                        <Card key={index} style={{ marginBottom: 12 }}>
-                            <CardContent style={{ padding: 16 }}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                                    <Text style={{ fontSize: 12, color: '#999' }}>
-                                        {new Date(item.completedAt).toLocaleDateString()}
-                                    </Text>
-                                    <View style={{ flexDirection: 'row' }}>
-                                        {Array.from({ length: item.challenge.spicyLevel || 1 }).map((_, i) => (
-                                            <Flame key={i} size={14} color="#ef4444" fill="#ef4444" />
-                                        ))}
+            <Accordion type="single" value={openAccordion} onValueChange={setOpenAccordion} style={styles.accordion}>
+                {unlockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor }]}>Unlocked Ranks</Text>}
+                {unlockedLevels.slice().reverse().map(level => {
+                    const challengesForLevel = getChallengesForLevel(level, sortedHistory);
+                    return (
+                        <AccordionItem key={`unlocked-${level.level}`} value={`unlocked-${level.level}`} style={styles.accordionItem}>
+                            <AccordionTrigger>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12}}>
+                                    <LevelIcon level={level} />
+                                    <View>
+                                        <Text style={[styles.accordionTriggerText, {color: textColor}]}>{level.title}</Text>
+                                        <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocked at {level.threshold} challenges</Text>
                                     </View>
                                 </View>
-                                <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>
-                                    "{item.challenge.text}"
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
+                                {challengesForLevel.length > 0 && (
+                                    <View>
+                                        <Text style={styles.completedStepsTitle}>Completed Steps on this Path:</Text>
+                                        {challengesForLevel.map((challenge, i) => (
+                                            <Card key={i} style={styles.miniChallengeCard} variant="outline">
+                                                 <Text style={{color: textColor, fontFamily: 'PT-Sans', lineHeight: 20}}>{challenge.text}</Text>
+                                            </Card>
+                                        ))}
+                                    </View>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    );
+                })}
+
+                {lockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>The Path Ahead</Text>}
+                {lockedLevels.map(level => (
+                    <AccordionItem key={`locked-${level.level}`} value={`locked-${level.level}`} style={[styles.accordionItem, { opacity: 0.6 }]}>
+                         <AccordionTrigger>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12}}>
+                                <LevelIcon level={level} isLocked />
+                                <View>
+                                    <Text style={[styles.accordionTriggerText, {color: textColor}]}>{level.title}</Text>
+                                    <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocks at {level.threshold} challenges</Text>
+                                </View>
+                            </View>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                             <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
+            </Accordion>
+
+            <View style={styles.fullLogContainer}>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>Completed Challenges Log ({completedCount})</Text>
+                {history.slice().reverse().map((item, index) => {
+                    if (!item.text || item.text.trim() === '') return null;
+                    return (
+                        <Card key={index} style={styles.logItem} variant="outline">
+                            <View style={{ flex: 1 }}>
+                                <Text style={[styles.logDate, { color: mutedColor }]}>
+                                    {format(new Date(item.completedAt), "MMMM d, yy")}
                                 </Text>
-                            </CardContent>
+                                <Text style={[styles.logText, { color: textColor }]}>{item.text}</Text>
+                            </View>
+                            <View style={{alignItems: 'flex-end', gap: 8}}>
+                                 <View style={styles.flameContainer}>
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <Flame key={i} size={16} color={i < item.spicyLevel ? destructiveColor : mutedColor} fill={i < item.spicyLevel ? destructiveColor : 'transparent'} />
+                                    ))}
+                                </View>
+                                <Trophy size={20} color={primaryColor} />
+                            </View>
                         </Card>
-                    ))}
-                </View>
-            )}
+                    );
+                })}
+            </View>
         </ScrollView>
     );
 }
+
+const styles = StyleSheet.create({
+    page: { flex: 1 },
+    container: { padding: 16, paddingBottom: 48 },
+    header: { width: '100%', alignItems: 'flex-start', marginBottom: 24 },
+    headerTitle: { fontFamily: 'Playfair-Display', fontSize: 28, fontWeight: 'bold' },
+    headerSubtitle: { fontFamily: 'PT-Sans', fontSize: 16, marginTop: 4 },
+    rankCard: { width: '100%', marginBottom: 32, padding: 20 },
+    rankLabel: { fontFamily: 'PT-Sans', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 12 },
+    levelIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+    levelTitle: { fontFamily: 'Playfair-Display', fontSize: 24, fontWeight: 'bold' },
+    levelDescription: { fontFamily: 'PT-Sans', fontSize: 14, lineHeight: 21, marginTop: 4 },
+    progressText: { fontFamily: 'PT-Sans', fontSize: 12, fontWeight: '600' },
+    sectionTitle: { fontFamily: 'Playfair-Display', fontSize: 22, fontWeight: 'bold', marginBottom: 16, width: '100%' },
+    accordion: { width: '100%', gap: 8 },
+    accordionItem: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 16 },
+    accordionTriggerText: { fontFamily: 'PT-Sans', fontSize: 16, fontWeight: 'bold' },
+    accordionThresholdText: { fontFamily: 'PT-Sans', fontSize: 12, marginTop: 2 },
+    accordionContentDescription: { fontFamily: 'PT-Sans', fontStyle: 'italic', fontSize: 14, lineHeight: 20, marginBottom: 16 },
+    completedStepsTitle: { fontFamily: 'PT-Sans', fontWeight: 'bold', marginBottom: 8 },
+    miniChallengeCard: { padding: 12, marginBottom: 8 },
+    fullLogContainer: { width: '100%', marginTop: 32 },
+    logItem: { width: '100%', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', padding: 16, marginBottom: 12 },
+    logText: { fontFamily: 'Playfair-Display', fontSize: 18, flexShrink: 1, marginTop: 4, fontStyle: 'italic', lineHeight: 24 },
+    logDate: { fontFamily: 'PT-Sans', fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase' },
+    flameContainer: { flexDirection: 'row', gap: 2 },
+});

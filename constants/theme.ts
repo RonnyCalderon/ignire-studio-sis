@@ -1,53 +1,48 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * This file contains the color palette for the app.
+ * The app is designed to be dark mode only, matching the web application's aesthetic.
  */
 
-import { Platform } from 'react-native';
+export const BORDER_RADIUS = 12;
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+// The definitive dark color palette, based on the provided image.
+const darkPalette = {
+  background: 'hsl(350, 12%, 10%)',
+  foreground: 'hsl(350, 15%, 85%)',
+  card: 'hsl(350, 10%, 15%)',
+  cardForeground: 'hsl(350, 15%, 85%)',
+  primary: 'hsl(350, 41%, 72%)',
+  primaryForeground: 'hsl(350, 12%, 10%)',
+  secondary: 'hsl(350, 10%, 20%)',
+  secondaryForeground: 'hsl(350, 15%, 90%)',
+  muted: 'hsl(350, 10%, 25%)',
+  mutedForeground: 'hsl(350, 10%, 55%)',
+  accent: 'hsl(0, 80%, 50%)',
+  accentForeground: 'hsl(0, 0%, 100%)',
+  destructive: 'hsl(0, 63%, 40%)',
+  destructiveForeground: 'hsl(0, 0%, 98%)',
+  border: 'hsl(350, 10%, 22%)',
+  input: 'hsl(350, 10%, 20%)',
+  ring: 'hsl(350, 41%, 72%)',
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+const theme = {
+  ...darkPalette,
+  text: darkPalette.foreground,
+  tint: darkPalette.primary,
+  icon: darkPalette.mutedForeground,
+  tabIconDefault: darkPalette.mutedForeground,
+  tabIconSelected: darkPalette.primary,
+}
+
+// To prevent any "flash of incorrect theme", both light and dark exports point to the same dark theme.
+export const Colors = {
+  light: theme,
+  dark: theme,
+};
+
+// Explicitly export themed keys for direct component use
+export const card = Colors.dark.card;
+export const border = Colors.dark.border;
+export const primary = Colors.dark.primary;
+export const accent = Colors.dark.accent;

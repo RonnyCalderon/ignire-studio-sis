@@ -1,23 +1,70 @@
-import { View, Text, Image, Alert, Platform } from "react-native";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { View, Text, Image, Alert, Platform, StyleSheet } from "react-native";
+import Card from "@/components/ui/card";
+import Button from "@/components/ui/button";
 import { CheckCircle, Clock, Heart, Play, Flame, CalendarPlus } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { placeholderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { type Challenge } from "@/hooks/use-weekly-challenge";
 import { smartShuffle } from "@/lib/utils";
 import * as Calendar from 'expo-calendar';
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 interface ChallengeCardProps {
   challenge: Challenge;
-  expiry: number | null; 
+  expiry: number | null;
   onStart: () => void;
   onComplete: () => void;
   isCompleted: boolean;
 }
 
+async function getCalendarId(primaryColor: string): Promise<string | null> {
+  if (Platform.OS === 'ios') {
+      const sources = await Calendar.getSourcesAsync();
+      const writableSource = sources.find(
+          source => source.type === Calendar.SourceType.LOCAL ||
+                    source.type === Calendar.SourceType.CALDAV ||
+                    source.type === Calendar.SourceType.EXCHANGE
+      );
+
+      if (!writableSource) {
+          return null;
+      }
+      
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      let calendar = calendars.find(
+          cal => cal.source.id === writableSource.id && cal.allowsModifications
+      );
+
+      if (calendar) {
+          return calendar.id;
+      }
+
+      return await Calendar.createCalendarAsync({
+          title: 'Ignite Studio',
+          color: primaryColor,
+          entityType: Calendar.EntityTypes.EVENT,
+          source: {
+            id: writableSource.id,
+            name: writableSource.name,
+          },
+          name: 'Ignite Studio',
+          ownerAccount: 'personal',
+          accessLevel: Calendar.CalendarAccessLevel.OWNER,
+      });
+  } else {
+      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+      const primaryCalendar = calendars.find(cal => cal.isPrimary);
+      if (primaryCalendar) {
+          return primaryCalendar.id;
+      }
+      return calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER)?.id || null;
+  }
+}
+
 const Countdown = ({ expiry }: { expiry: number }) => {
     const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+    const textColor = useThemeColor({}, 'text');
+    const mutedForeground = useThemeColor({}, 'mutedForeground');
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -37,14 +84,14 @@ const Countdown = ({ expiry }: { expiry: number }) => {
     }, [expiry]);
 
     return (
-        <View style={{ flexDirection: 'row', gap: 16, marginVertical: 8 }}>
+        <View style={styles.countdownContainer}>
             {[
               { l: 'Days', v: timeLeft.days }, { l: 'Hrs', v: timeLeft.hours },
               { l: 'Mins', v: timeLeft.minutes }, { l: 'Secs', v: timeLeft.seconds }
             ].map((item, i) => (
               <View key={i} style={{ alignItems: 'center' }}>
-                 <Text style={{ fontSize: 20, fontWeight: 'bold' }}>{String(item.v).padStart(2, '0')}</Text>
-                 <Text style={{ fontSize: 10, color: '#666' }}>{item.l}</Text>
+                 <Text style={[styles.countdownValue, { color: textColor }]}>{String(item.v).padStart(2, '0')}</Text>
+                 <Text style={[styles.countdownLabel, { color: mutedForeground }]}>{item.l}</Text>
               </View>
             ))}
         </View>
@@ -54,6 +101,16 @@ const Countdown = ({ expiry }: { expiry: number }) => {
 export function ChallengeCard({ challenge, expiry, onStart, onComplete, isCompleted }: ChallengeCardProps) {
   const [challengeImage, setChallengeImage] = useState<ImagePlaceholder | null>(null);
   
+  const textColor = useThemeColor({}, 'text');
+  const mutedForeground = useThemeColor({}, 'mutedForeground');
+  const cardBackgroundColor = useThemeColor({}, 'card');
+  const mutedBackgroundColor = useThemeColor({}, 'muted');
+  const borderColor = useThemeColor({}, 'border');
+  const successColor = useThemeColor({}, 'success');
+  const primaryColor = useThemeColor({}, 'primary');
+  const primaryForeground = useThemeColor({}, 'primaryForeground');
+  const destructiveColor = useThemeColor({}, 'destructive');
+
   const getChallengeImage = async () => {
     const challengeImages = placeholderImages.filter(img => img.imageHint.includes('couple'));
     const img = await smartShuffle('challengeImages', challengeImages);
@@ -65,40 +122,53 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
   }, [challenge]);
 
   const addToCalendar = async () => {
+    if (!expiry) {
+        Alert.alert('Error', 'Challenge expiry date is not set.');
+        return;
+    }
+
     try {
-      const { status } = await Calendar.requestCalendarPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'We need access to your calendar to schedule this challenge.');
-        return;
-      }
+        const { status } = await Calendar.requestCalendarPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permission Denied', 'To add challenges to your calendar, please grant calendar permissions in your device settings.');
+            return;
+        }
 
-      const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
-      const defaultCalendar = Platform.OS === 'ios'
-        ? calendars.find(cal => cal.source.name === 'Default') || calendars[0]
-        : calendars.find(cal => cal.accessLevel === Calendar.CalendarAccessLevel.OWNER) || calendars[0];
+        const calendarId = await getCalendarId(primaryColor);
 
-      if (!defaultCalendar) {
-        Alert.alert('Error', 'Could not find a calendar to add this event to.');
-        return;
-      }
+        if (!calendarId) {
+            Alert.alert('Error', 'Could not find a writable calendar on your device.');
+            return;
+        }
 
-      const startDate = new Date();
-      // Default to scheduling for "Tonight" (e.g., 8 PM)
-      startDate.setHours(20, 0, 0, 0); 
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour
+        const cleanNotes = challenge.persuasionScript
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<[^>]+>/g, '')
+            .replace(/&nbsp;/g, ' ');
 
-      await Calendar.createEventAsync(defaultCalendar.id, {
-        title: `Ignite Challenge: ${challenge.text}`,
-        startDate,
-        endDate,
-        notes: challenge.persuasionScript,
-        timeZone: 'GMT',
-      });
+        const startDate = new Date(expiry - 7 * 24 * 60 * 60 * 1000);
+        const endDate = new Date(expiry);
 
-      Alert.alert('Success', 'Challenge added to your calendar for tonight at 8 PM!');
-    } catch (e) {
-      console.error(e);
-      Alert.alert('Error', 'Failed to add event to calendar.');
+        const eventDetails = {
+            title: `Weekly Challenge: ${challenge.text}`,
+            notes: cleanNotes,
+            startDate,
+            endDate,
+            allDay: true,
+            alarms: [
+                { relativeOffset: 24 * 60 },
+                { relativeOffset: 3 * 24 * 60 },
+                { relativeOffset: (7 * 24 * 60) - 60 }
+            ],
+        };
+
+        await Calendar.createEventAsync(calendarId, eventDetails);
+
+        Alert.alert('Success!', 'Challenge has been added to your calendar.');
+
+    } catch (error) {
+        console.error('Failed to add to calendar:', error);
+        Alert.alert('Error', 'An unexpected error occurred while adding the event to your calendar.');
     }
   };
 
@@ -110,72 +180,84 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
     const cleanText = text
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\* /g, '• ')
-      .replace(/<br \/>/g, '\n');
+      .replace(/<br\s*\/?>/gi, '\n');
     
-    return <Text style={{ lineHeight: 22, color: '#4b5563', fontStyle: 'italic' }}>{cleanText}</Text>;
+    return <Text style={[styles.scriptText, { color: textColor }]}>{cleanText}</Text>;
   };
 
   return (
     <Card style={{ overflow: 'hidden', marginBottom: 24 }}>
-      <View style={{ height: 200, width: '100%', position: 'relative' }}>
-         <Image source={{ uri: challengeImage.imageUrl }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-         <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, padding: 6, flexDirection: 'row' }}>
+      <View style={styles.imageContainer}>
+         <Image source={{ uri: challengeImage.imageUrl }} style={styles.image} resizeMode="cover" />
+         <View style={styles.flameContainer}>
             {Array.from({ length: 3 }).map((_, i) => (
-                <Flame key={i} size={16} color={i < challenge.spicyLevel ? '#ef4444' : '#9ca3af'} fill={i < challenge.spicyLevel ? '#ef4444' : 'transparent'} />
+                <Flame key={i} size={16} color={i < challenge.spicyLevel ? destructiveColor : mutedForeground} fill={i < challenge.spicyLevel ? destructiveColor : 'transparent'} />
             ))}
          </View>
       </View>
 
-      <CardContent>
-        <Text style={{ fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 16, color: '#1f2937' }}>
+      <View style={{ padding: 20 }}>
+        <Text style={[styles.challengeText, { color: textColor }]}>
           "{challenge.text}"
         </Text>
         
-        <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8 }}>
+        <View style={[styles.scriptContainer, { backgroundColor: mutedBackgroundColor }]}>
             {renderScript(challenge.persuasionScript)}
         </View>
 
         {isTimerRunning && expiry && (
           <View style={{ alignItems: 'center', marginTop: 16 }}>
-             <View style={{ height: 1, backgroundColor: '#e5e7eb', width: '100%', marginBottom: 16 }} />
-             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Clock size={16} color="#6b7280" />
-                <Text style={{ marginLeft: 6, color: '#6b7280' }}>Time Remaining</Text>
+             <View style={[styles.separator, { backgroundColor: borderColor }]} />
+             <View style={styles.timerContainer}>
+                <Clock size={16} color={mutedForeground} />
+                <Text style={[styles.timerText, { color: mutedForeground }]}>Time Remaining</Text>
              </View>
              <Countdown expiry={expiry} />
              
              <Button variant="outline" onPress={addToCalendar} style={{ marginTop: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <CalendarPlus size={16} color="#000" style={{ marginRight: 8 }} />
-                    <Text>Add to Calendar</Text>
-                </View>
+                <CalendarPlus size={16} color={primaryColor} style={{ marginRight: 8 }} />
+                <Text style={{ color: primaryColor }}>Add to Calendar</Text>
              </Button>
           </View>
         )}
-      </CardContent>
+      </View>
 
-      <CardFooter style={{ justifyContent: 'center', backgroundColor: '#f9fafb' }}>
+      <View style={[styles.footer, { backgroundColor: cardBackgroundColor }]}>
         {isCompleted ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <CheckCircle size={24} color="#16a34a" />
-                <Text style={{ marginLeft: 8, fontSize: 18, fontWeight: '600', color: '#16a34a' }}>Completed!</Text>
+            <View style={styles.completedContainer}>
+                <CheckCircle size={24} color={successColor} />
+                <Text style={[styles.completedText, { color: successColor }]}>Completed!</Text>
             </View>
         ) : isTimerRunning ? (
-            <Button size="lg" onPress={onComplete}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Heart size={20} color="white" style={{ marginRight: 8 }} />
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>We Did It!</Text>
-                </View>
+            <Button onPress={onComplete}>
+                <Heart size={20} color={primaryForeground} style={{ marginRight: 8 }} />
+                <Text style={{ color: primaryForeground, fontWeight: 'bold' }}>We Did It!</Text>
             </Button>
         ) : (
-          <Button size="lg" onPress={onStart}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Play size={20} color="white" style={{ marginRight: 8 }} />
-                  <Text style={{ color: 'white', fontWeight: 'bold' }}>Start Challenge</Text>
-              </View>
+          <Button onPress={onStart}>
+              <Play size={20} color={primaryForeground} style={{ marginRight: 8 }} />
+              <Text style={{ color: primaryForeground, fontWeight: 'bold' }}>Start Challenge</Text>
           </Button>
         )}
-      </CardFooter>
+      </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+    countdownContainer: { flexDirection: 'row', gap: 16, marginVertical: 8 },
+    countdownValue: { fontSize: 20, fontWeight: 'bold', fontFamily: 'Playfair-Display' },
+    countdownLabel: { fontSize: 10, fontFamily: 'PT-Sans' },
+    imageContainer: { height: 200, width: '100%', position: 'relative' },
+    image: { width: '100%', height: '100%' },
+    flameContainer: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, padding: 6, flexDirection: 'row' },
+    challengeText: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 16, fontFamily: 'Playfair-Display' },
+    scriptContainer: { padding: 12, borderRadius: 8 },
+    scriptText: { lineHeight: 22, fontStyle: 'italic', fontFamily: 'PT-Sans' },
+    separator: { height: 1, width: '100%', marginBottom: 16 },
+    timerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    timerText: { marginLeft: 6, fontFamily: 'PT-Sans' },
+    footer: { justifyContent: 'center', padding: 20 },
+    completedContainer: { flexDirection: 'row', alignItems: 'center' },
+    completedText: { marginLeft: 8, fontSize: 18, fontWeight: '600', fontFamily: 'PT-Sans' },
+});

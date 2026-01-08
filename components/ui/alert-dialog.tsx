@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import { Button } from '@/components/ui/button';
+import { Modal, View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import Button from '@/components/ui/button';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { BORDER_RADIUS } from '@/constants/theme';
 
 interface AlertDialogProps {
   open: boolean;
@@ -9,6 +11,8 @@ interface AlertDialogProps {
 }
 
 export function AlertDialog({ open, onOpenChange, children }: AlertDialogProps) {
+  const cardBackgroundColor = useThemeColor({}, 'card');
+
   return (
     <Modal
       transparent
@@ -19,7 +23,7 @@ export function AlertDialog({ open, onOpenChange, children }: AlertDialogProps) 
       <TouchableWithoutFeedback onPress={() => onOpenChange(false)}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: cardBackgroundColor }]}>
               {children}
             </View>
           </TouchableWithoutFeedback>
@@ -38,11 +42,13 @@ export function AlertDialogHeader({ children }: { children: React.ReactNode }) {
 }
 
 export function AlertDialogTitle({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.title}>{children}</Text>;
+  const textColor = useThemeColor({}, 'text');
+  return <Text style={[styles.title, { color: textColor }]}>{children}</Text>;
 }
 
 export function AlertDialogDescription({ children }: { children: React.ReactNode }) {
-  return <Text style={styles.description}>{children}</Text>;
+  const mutedForeground = useThemeColor({}, 'mutedForeground');
+  return <Text style={[styles.description, { color: mutedForeground }]}>{children}</Text>;
 }
 
 export function AlertDialogFooter({ children }: { children: React.ReactNode }) {
@@ -50,17 +56,19 @@ export function AlertDialogFooter({ children }: { children: React.ReactNode }) {
 }
 
 export function AlertDialogCancel({ onPress, children }: { onPress?: () => void, children: React.ReactNode }) {
+  const textColor = useThemeColor({}, 'text');
   return (
-    <Button variant="outline" onPress={onPress} style={{ flex: 1, marginRight: 8 }}>
-      <Text style={{ color: '#000' }}>{children}</Text>
+    <Button variant="outline" onPress={onPress}>
+      <Text style={{ color: textColor }}>{children}</Text>
     </Button>
   );
 }
 
 export function AlertDialogAction({ onPress, children }: { onPress?: () => void, children: React.ReactNode }) {
+  const primaryForeground = useThemeColor({}, 'primaryForeground');
   return (
-    <Button onPress={onPress} style={{ flex: 1, marginLeft: 8 }}>
-      <Text style={{ color: 'white', fontWeight: 'bold' }}>{children}</Text>
+    <Button onPress={onPress}>
+      <Text style={{ color: primaryForeground, fontWeight: 'bold' }}>{children}</Text>
     </Button>
   );
 }
@@ -68,14 +76,13 @@ export function AlertDialogAction({ onPress, children }: { onPress?: () => void,
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   content: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS,
     padding: 24,
     width: '100%',
     maxWidth: 400,
@@ -91,17 +98,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1a1a1a',
     marginBottom: 8,
+    fontFamily: 'Playfair-Display',
   },
   description: {
     fontSize: 16,
-    color: '#666',
     lineHeight: 22,
+    fontFamily: 'PT-Sans',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: 24,
+    gap: 12,
   }
 });

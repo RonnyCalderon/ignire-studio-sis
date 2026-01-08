@@ -1,14 +1,20 @@
 import { IntimacyQuizGame } from '@/components/intimacy-quiz-game';
 import { PositionDiceGame } from '@/components/position-dice-game';
 import { ScratchCardGame } from '@/components/scratch-card-game';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function ExploreScreen() {
+  const backgroundColor = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const mutedForeground = useThemeColor({}, 'mutedForeground');
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+    <ScrollView style={[styles.container, { backgroundColor }]} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
       <View style={styles.header}>
-        <Text style={styles.title}>Playground</Text>
-        <Text style={styles.subtitle}>Sparks & Games for the weekend.</Text>
+        <Text style={[styles.title, { color: textColor }]}>Playground</Text>
+        <Text style={[styles.subtitle, { color: mutedForeground }]}>Sparks & Games for the weekend.</Text>
       </View>
 
       <View style={styles.section}>
@@ -29,7 +35,6 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     marginTop: 20,
@@ -38,12 +43,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1a1a1a',
+    fontFamily: 'Playfair-Display',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     marginTop: 4,
+    fontFamily: 'PT-Sans',
   },
   section: {
     marginBottom: 40,

@@ -1,46 +1,69 @@
-import { TouchableOpacity, Text, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
-interface ButtonProps {
-  onPress?: () => void;
+type ButtonProps = {
   children: React.ReactNode;
+  onPress?: () => void;
   variant?: 'default' | 'outline' | 'ghost';
-  size?: 'default' | 'icon' | 'lg';
-  className?: string; 
   style?: ViewStyle;
   textStyle?: TextStyle;
-  disabled?: boolean;
-}
+};
 
-export function Button({ onPress, children, variant = 'default', size = 'default', style, textStyle, disabled }: ButtonProps) {
-  const baseStyle: ViewStyle = {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    paddingVertical: size === 'lg' ? 14 : 10,
-    paddingHorizontal: size === 'icon' ? 10 : 16,
-    opacity: disabled ? 0.5 : 1,
+const Button = ({ children, onPress, variant = 'default', style, textStyle }: ButtonProps) => {
+  const primaryColor = useThemeColor({}, 'primary');
+  const accentColor = useThemeColor({}, 'accent');
+  const textColorLight = useThemeColor({ light: '#fff', dark: '#000' }, 'text');
+  const borderColor = useThemeColor({}, 'border');
+
+  const getVariantStyle = (): ViewStyle => {
+    switch (variant) {
+      case 'outline':
+        return { borderWidth: 1, borderColor };
+      case 'ghost':
+        return { backgroundColor: 'transparent' };
+      case 'default':
+      default:
+        return { backgroundColor: primaryColor };
+    }
   };
 
-  const variantStyles: Record<string, ViewStyle> = {
-    default: { backgroundColor: '#FF5A5F' },
-    outline: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#e5e7eb' },
-    ghost: { backgroundColor: 'transparent' },
+  const getTextStyle = (): TextStyle => {
+    switch (variant) {
+      case 'outline':
+      case 'ghost':
+        return { color: primaryColor };
+      case 'default':
+      default:
+        return { color: textColorLight };
+    }
   };
-
-  const textColor = variant === 'default' ? 'white' : '#1f2937';
 
   return (
-    <TouchableOpacity 
-      onPress={onPress} 
-      disabled={disabled}
-      style={[baseStyle, variantStyles[variant], style]}
+    <TouchableOpacity
+      style={[styles.button, getVariantStyle(), style]}
+      onPress={onPress}
     >
-      {typeof children === 'string' ? (
-        <Text style={[{ color: textColor, fontWeight: '600', fontSize: 16 }, textStyle]}>{children}</Text>
-      ) : (
-        children
-      )}
+      <Text style={[styles.text, getTextStyle(), textStyle]}>{children}</Text>
     </TouchableOpacity>
   );
-}
+};
+
+const styles = StyleSheet.create({
+  button: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'PT-Sans',
+  },
+});
+
+export default Button;

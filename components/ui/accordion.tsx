@@ -1,70 +1,108 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+import * as React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ChevronDown } from 'lucide-react-native';
+
+const AccordionContext = React.createContext<{
+  value: string | null;
+  onValueChange: (value: string | null) => void;
+}>({
+  value: null,
+  onValueChange: () => {},
+});
+
+const useAccordion = () => {
+  const context = React.useContext(AccordionContext);
+  if (!context) {
+    throw new Error('useAccordion must be used within an Accordion');
+  }
+  return context;
+};
+
+const Accordion = ({ value, onValueChange, children, ...props }: { value: string | null, onValueChange: (value: string | null) => void, children: React.ReactNode, style?: any, type?: 'single' | 'multiple' }) => {
+  return (
+    <AccordionContext.Provider value={{ value, onValueChange }}>
+      <View style={[styles.accordion, props.style]} {...props}>
+        {children}
+      </View>
+    </AccordionContext.Provider>
+  );
+};
+
+const AccordionItemContext = React.createContext<{ value: string | null }>({ value: null });
+
+const useAccordionItem = () => {
+  const context = React.useContext(AccordionItemContext);
+  if (!context) {
+    throw new Error('useAccordionItem must be used within an AccordionItem');
+  }
+  return context;
 }
 
-export function AccordionItem({ title, subtitle, children, icon: Icon }: any) {
-  const [isOpen, setIsOpen] = useState(false);
+const AccordionItem = ({ value, children, ...props }: { value: string, children: React.ReactNode, style?: any }) => {
+  return (
+    <AccordionItemContext.Provider value={{ value }}>
+      <View style={[styles.item, props.style]} {...props}>
+        {children}
+      </View>
+    </AccordionItemContext.Provider>
+  );
+};
 
-  const toggleOpen = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsOpen(!isOpen);
-  };
+const AccordionTrigger = ({ children, ...props }: { children: React.ReactNode, style?: any }) => {
+  const { value, onValueChange } = useAccordion();
+  const { value: itemValue } = useAccordionItem();
+  const isOpen = value === itemValue;
 
   return (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity onPress={toggleOpen} style={styles.header} activeOpacity={0.7}>
-        <View style={styles.headerLeft}>
-          {Icon && <Icon size={24} color="#666" style={{ marginRight: 12 }} />}
-          <View>
-            <Text style={styles.title}>{title}</Text>
-            {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
-          </View>
-        </View>
-        {isOpen ? <ChevronUp size={20} color="#999" /> : <ChevronDown size={20} color="#999" />}
-      </TouchableOpacity>
-      {isOpen && <View style={styles.content}>{children}</View>}
+    <TouchableOpacity
+      onPress={() => onValueChange(isOpen ? null : itemValue)}
+      style={[styles.trigger, props.style]}
+      {...props}
+    >
+      {children}
+      <ChevronDown
+        size={20}
+        color="#999"
+        style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}
+      />
+    </TouchableOpacity>
+  );
+};
+
+const AccordionContent = ({ children, ...props }: { children: React.ReactNode, style?: any }) => {
+  const { value } = useAccordion();
+  const { value: itemValue } = useAccordionItem();
+  const isOpen = value === itemValue;
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <View style={[styles.content, props.style]} {...props}>
+      {children}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  itemContainer: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    overflow: 'hidden',
+  accordion: {
+    width: '100%',
   },
-  header: {
+  item: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  trigger: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
+    paddingVertical: 16,
   },
   content: {
-    padding: 16,
-    paddingTop: 0,
-    borderTopWidth: 1,
-    borderTopColor: '#f9f9f9',
-  }
+    paddingBottom: 16,
+  },
 });
+
+export { Accordion, AccordionItem, AccordionTrigger, AccordionContent };
