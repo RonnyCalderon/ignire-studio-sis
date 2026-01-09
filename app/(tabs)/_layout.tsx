@@ -1,15 +1,22 @@
 import { HapticTab } from '@/components/haptic-tab';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Tabs } from 'expo-router';
-import { Gamepad2, Home, Trophy, User } from 'lucide-react-native';
+import { Gamepad2, Home, Trophy, User, MessageSquare } from 'lucide-react-native';
 import React from 'react';
 import { Platform } from 'react-native';
+import { useUser } from '@/context/user-provider';
+import { UserOnboarding } from '@/components/user-onboarding';
 
 export default function TabLayout() {
   const activeColor = useThemeColor({}, 'primary');
   const inactiveColor = useThemeColor({}, 'mutedForeground');
   const tabBackgroundColor = useThemeColor({}, 'card');
   const tabBorderColor = useThemeColor({}, 'border');
+  const { userIsKnown } = useUser();
+
+  if (!userIsKnown) {
+    return <UserOnboarding />;
+  }
 
   return (
     <Tabs
@@ -37,6 +44,13 @@ export default function TabLayout() {
         options={{
           title: 'Games',
           tabBarIcon: ({ color }) => <Gamepad2 size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="daily-phrase"
+        options={{
+          title: 'Daily Phrase',
+          tabBarIcon: ({ color }) => <MessageSquare size={28} color={color} />,
         }}
       />
       <Tabs.Screen

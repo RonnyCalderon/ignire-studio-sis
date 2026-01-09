@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Flame, Lock, Trophy, Award } from 'lucide-react-native';
 import { format } from 'date-fns';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Gamification Logic ---
 const getCurrentLevel = (completedCount: number): [Level | null, Level | null] => {
@@ -91,6 +92,7 @@ export default function HistoryScreen() {
     const mutedColor = useThemeColor({}, 'mutedForeground');
     const destructiveColor = useThemeColor({}, 'destructive');
     const primaryColor = useThemeColor({}, 'primary');
+    const backgroundColor = useThemeColor({}, 'background');
 
     const { completedCount, currentLevel, nextLevel, unlockedLevels, lockedLevels, sortedHistory } = useMemo(() => {
         const completedCount = history.filter(item => item.text && item.text.trim() !== '').length;
@@ -103,12 +105,14 @@ export default function HistoryScreen() {
 
     if (!currentLevel) {
         return (
-            <ScrollView style={styles.page} contentContainerStyle={styles.container}>
-                <View style={[styles.header, { alignItems: 'center'}]}>
-                    <Text style={[styles.headerTitle, { color: textColor }]}>Your Journey Begins</Text>
-                    <Text style={[styles.headerSubtitle, { color: mutedColor }]}>Complete your first challenge to unlock your rank.</Text>
-                </View>
-            </ScrollView>
+            <SafeAreaView style={[styles.page, { backgroundColor }]} edges={['top']}>
+                <ScrollView contentContainerStyle={styles.container}>
+                    <View style={[styles.header, { alignItems: 'center'}]}>
+                        <Text style={[styles.headerTitle, { color: textColor }]}>Your Journey Begins</Text>
+                        <Text style={[styles.headerSubtitle, { color: mutedColor }]}>Complete your first challenge to unlock your rank.</Text>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         )
     }
 
@@ -121,97 +125,99 @@ export default function HistoryScreen() {
         : "You've reached the highest level!";
 
     return (
-        <ScrollView style={styles.page} contentContainerStyle={styles.container}>
-            <View style={styles.header}>
-                <Text style={[styles.headerTitle, { color: textColor }]}>{userName} & {partnerName}'s Journey</Text>
-                <Text style={[styles.headerSubtitle, { color: mutedColor }]}>A record of our shared adventures and growth.</Text>
-            </View>
+        <SafeAreaView style={[styles.page, { backgroundColor }]} edges={['top']}>
+            <ScrollView contentContainerStyle={styles.container}>
+                <View style={styles.header}>
+                    <Text style={[styles.headerTitle, { color: textColor }]}>{userName} & {partnerName}'s Journey</Text>
+                    <Text style={[styles.headerSubtitle, { color: mutedColor }]}>A record of our shared adventures and growth.</Text>
+                </View>
 
-            <RankCard level={currentLevel} progress={progressPercent} progressText={progressText} />
+                <RankCard level={currentLevel} progress={progressPercent} progressText={progressText} />
 
-            <Accordion type="single" value={openAccordion} onValueChange={setOpenAccordion} style={styles.accordion}>
-                {unlockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor }]}>Unlocked Ranks</Text>}
-                {unlockedLevels.slice().reverse().map(level => {
-                    const challengesForLevel = getChallengesForLevel(level, sortedHistory);
-                    return (
-                        <AccordionItem key={`unlocked-${level.level}`} value={`unlocked-${level.level}`} style={styles.accordionItem}>
-                            <AccordionTrigger>
+                <Accordion type="single" value={openAccordion} onValueChange={setOpenAccordion} style={styles.accordion}>
+                    {unlockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor }]}>Unlocked Ranks</Text>}
+                    {unlockedLevels.slice().reverse().map(level => {
+                        const challengesForLevel = getChallengesForLevel(level, sortedHistory);
+                        return (
+                            <AccordionItem key={`unlocked-${level.level}`} value={`unlocked-${level.level}`} style={styles.accordionItem}>
+                                <AccordionTrigger>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12}}>
+                                        <LevelIcon level={level} />
+                                        <View>
+                                            <Text style={[styles.accordionTriggerText, {color: textColor}]}>{level.title}</Text>
+                                            <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocked at {level.threshold} challenges</Text>
+                                        </View>
+                                    </View>
+                                </AccordionTrigger>
+                                <AccordionContent>
+                                    <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
+                                    {challengesForLevel.length > 0 && (
+                                        <View>
+                                            <Text style={styles.completedStepsTitle}>Completed Steps on this Path:</Text>
+                                            {challengesForLevel.map((challenge, i) => (
+                                                <Card key={i} style={styles.miniChallengeCard} variant="outline">
+                                                     <Text style={{color: textColor, fontFamily: 'PT-Sans', lineHeight: 20}}>{challenge.text}</Text>
+                                                </Card>
+                                            ))}
+                                        </View>
+                                    )}
+                                </AccordionContent>
+                            </AccordionItem>
+                        );
+                    })}
+
+                    {lockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>The Path Ahead</Text>}
+                    {lockedLevels.map(level => (
+                        <AccordionItem key={`locked-${level.level}`} value={`locked-${level.level}`} style={[styles.accordionItem, { opacity: 0.6 }]}>
+                             <AccordionTrigger>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12}}>
-                                    <LevelIcon level={level} />
+                                    <LevelIcon level={level} isLocked />
                                     <View>
                                         <Text style={[styles.accordionTriggerText, {color: textColor}]}>{level.title}</Text>
-                                        <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocked at {level.threshold} challenges</Text>
+                                        <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocks at {level.threshold} challenges</Text>
                                     </View>
                                 </View>
                             </AccordionTrigger>
                             <AccordionContent>
-                                <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
-                                {challengesForLevel.length > 0 && (
-                                    <View>
-                                        <Text style={styles.completedStepsTitle}>Completed Steps on this Path:</Text>
-                                        {challengesForLevel.map((challenge, i) => (
-                                            <Card key={i} style={styles.miniChallengeCard} variant="outline">
-                                                 <Text style={{color: textColor, fontFamily: 'PT-Sans', lineHeight: 20}}>{challenge.text}</Text>
-                                            </Card>
-                                        ))}
-                                    </View>
-                                )}
+                                 <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
                             </AccordionContent>
                         </AccordionItem>
-                    );
-                })}
+                    ))}
+                </Accordion>
 
-                {lockedLevels.length > 0 && <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>The Path Ahead</Text>}
-                {lockedLevels.map(level => (
-                    <AccordionItem key={`locked-${level.level}`} value={`locked-${level.level}`} style={[styles.accordionItem, { opacity: 0.6 }]}>
-                         <AccordionTrigger>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12}}>
-                                <LevelIcon level={level} isLocked />
-                                <View>
-                                    <Text style={[styles.accordionTriggerText, {color: textColor}]}>{level.title}</Text>
-                                    <Text style={[styles.accordionThresholdText, { color: mutedColor }]}>Unlocks at {level.threshold} challenges</Text>
+                <View style={styles.fullLogContainer}>
+                    <Text style={[styles.sectionTitle, { color: textColor }]}>Completed Challenges Log ({completedCount})</Text>
+                    {history.slice().reverse().map((item, index) => {
+                        if (!item.text || item.text.trim() === '') return null;
+                        return (
+                            <Card key={index} style={styles.logItem} variant="outline">
+                                <View style={{ flex: 1 }}>
+                                    <Text style={[styles.logDate, { color: mutedColor }]}>
+                                        {format(new Date(item.completedAt), "MMMM d, yy")}
+                                    </Text>
+                                    <Text style={[styles.logText, { color: textColor }]}>{item.text}</Text>
                                 </View>
-                            </View>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                             <Text style={[styles.accordionContentDescription, { color: mutedColor }]}>{level.description}</Text>
-                        </AccordionContent>
-                    </AccordionItem>
-                ))}
-            </Accordion>
-
-            <View style={styles.fullLogContainer}>
-                <Text style={[styles.sectionTitle, { color: textColor }]}>Completed Challenges Log ({completedCount})</Text>
-                {history.slice().reverse().map((item, index) => {
-                    if (!item.text || item.text.trim() === '') return null;
-                    return (
-                        <Card key={index} style={styles.logItem} variant="outline">
-                            <View style={{ flex: 1 }}>
-                                <Text style={[styles.logDate, { color: mutedColor }]}>
-                                    {format(new Date(item.completedAt), "MMMM d, yy")}
-                                </Text>
-                                <Text style={[styles.logText, { color: textColor }]}>{item.text}</Text>
-                            </View>
-                            <View style={{alignItems: 'flex-end', gap: 8}}>
-                                 <View style={styles.flameContainer}>
-                                    {Array.from({ length: 3 }).map((_, i) => (
-                                        <Flame key={i} size={16} color={i < item.spicyLevel ? destructiveColor : mutedColor} fill={i < item.spicyLevel ? destructiveColor : 'transparent'} />
-                                    ))}
+                                <View style={{alignItems: 'flex-end', gap: 8}}>
+                                     <View style={styles.flameContainer}>
+                                        {Array.from({ length: 3 }).map((_, i) => (
+                                            <Flame key={i} size={16} color={i < item.spicyLevel ? destructiveColor : mutedColor} fill={i < item.spicyLevel ? destructiveColor : 'transparent'} />
+                                        ))}
+                                    </View>
+                                    <Trophy size={20} color={primaryColor} />
                                 </View>
-                                <Trophy size={20} color={primaryColor} />
-                            </View>
-                        </Card>
-                    );
-                })}
-            </View>
-        </ScrollView>
+                            </Card>
+                        );
+                    })}
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
     page: { flex: 1 },
-    container: { padding: 16, paddingBottom: 48 },
-    header: { width: '100%', alignItems: 'flex-start', marginBottom: 24 },
+    container: { padding: 16, paddingBottom: 120 }, // Increased padding bottom for tab bar
+    header: { width: '100%', alignItems: 'flex-start', marginBottom: 24, marginTop: 10 },
     headerTitle: { fontFamily: 'Playfair-Display', fontSize: 28, fontWeight: 'bold' },
     headerSubtitle: { fontFamily: 'PT-Sans', fontSize: 16, marginTop: 4 },
     rankCard: { width: '100%', marginBottom: 32, padding: 20 },

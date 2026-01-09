@@ -1,15 +1,17 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, Easing } from 'react-native';
+import { View, Text, Animated, StyleSheet, Easing, Dimensions } from 'react-native';
 import Button from '@/components/ui/button';
 import Card from '@/components/ui/card';
-import { Dices, RefreshCw, Sparkles } from 'lucide-react-native';
-import { actions, bodyParts } from '@/lib/love-dice';
+import { Dices, RefreshCw, Sparkles, MapPin, Heart, Activity } from 'lucide-react-native';
+import { actions, bodyParts, places } from '@/lib/love-dice';
 import { smartShuffle } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '@/hooks/use-theme-color';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
 export function PositionDiceGame() {
-  const [result, setResult] = useState<{ action: string; bodyPart: string } | null>(null);
+  const [result, setResult] = useState<{ action: string; bodyPart: string; place: string } | null>(null);
   const [isRolling, setIsRolling] = useState(false);
 
   const spinValue = useRef(new Animated.Value(0)).current;
@@ -39,7 +41,7 @@ export function PositionDiceGame() {
     Animated.parallel([
       Animated.timing(spinValue, {
         toValue: 1,
-        duration: 800,
+        duration: 1000,
         easing: Easing.out(Easing.bounce),
         useNativeDriver: true,
       }),
@@ -51,18 +53,45 @@ export function PositionDiceGame() {
 
     const action = await smartShuffle('dice_action', actions);
     const bodyPart = await smartShuffle('dice_bodyPart', bodyParts);
+    const place = await smartShuffle('dice_place', places);
 
     setTimeout(() => {
-      setResult({ action, bodyPart });
+      setResult({ action, bodyPart, place });
       setIsRolling(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 800);
+    }, 1000);
   };
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg']
   });
+
+  const Die = ({ label, value, icon: Icon, delay }: { label: string, value: string | undefined, icon: any, delay: number }) => (
+    <Animated.View style={[
+      styles.die, 
+      { 
+        backgroundColor: dieBackgroundColor, 
+        borderColor: dieBorderColor,
+        transform: [
+          { rotate: spin },
+          { scale: scaleValue }
+        ] 
+      }
+    ]}>
+      <View style={styles.dieHeader}>
+        <Icon size={14} color={primaryColor} />
+        <Text style={[styles.dieLabel, { color: subTextColor }]}>{label}</Text>
+      </View>
+      <Text 
+        style={[styles.dieValue, { color: dieValueColor }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+      >
+        {isRolling ? "..." : value || "?"}
+      </Text>
+    </Animated.View>
+  );
 
   return (
     <Card>
@@ -76,28 +105,31 @@ export function PositionDiceGame() {
 
         <View style={{ alignItems: 'center', gap: 24, padding: 20 }}>
             <View style={styles.diceContainer}>
-                <Animated.View style={[styles.die, { backgroundColor: dieBackgroundColor, borderColor: dieBorderColor, transform: [{ rotate: spin }, { scale: scaleValue }] }]}>
-                    <Text style={styles.dieLabel}>ACTION</Text>
-                    <Text style={[styles.dieValue, { color: dieValueColor }]}>
-                        {isRolling ? "..." : result?.action || "?"}
-                    </Text>
-                </Animated.View>
-
-                <Animated.View style={[styles.die, { backgroundColor: iconContainerBackgroundColor, borderColor: primaryColor, transform: [{ rotate: spin }, { scale: scaleValue }] }]}>
-                    <Text style={[styles.dieLabel, { color: primaryColor }]}>BODY PART</Text>
-                    <Text style={[styles.dieValue, { color: primaryColor }]}>
-                        {isRolling ? "..." : result?.bodyPart || "?"}
-                    </Text>
-                </Animated.View>
+                <Die 
+                  label="ACTION" 
+                  value={result?.action} 
+                  icon={Activity} 
+                  delay={0}
+                />
+                <Die 
+                  label="BODY PART" 
+                  value={result?.bodyPart} 
+                  icon={Heart} 
+                  delay={100}
+                />
+                <Die 
+                  label="PLACE" 
+                  value={result?.place} 
+                  icon={MapPin} 
+                  delay={200}
+                />
             </View>
 
             {result && !isRolling && (
                <View style={[styles.resultContainer, { backgroundColor: resultContainerBackgroundColor, borderColor: resultContainerBorderColor }]}>
-                  <Sparkles size={20} color="#F59E0B" />
                   <Text style={[styles.resultText, { color: resultTextColor }]}>
-                     {result.action} the {result.bodyPart}
+                     {result.action} {result.bodyPart === 'Lips' ? 'on the' : 'the'} {result.bodyPart} in the {result.place}
                   </Text>
-                  <Sparkles size={20} color="#F59E0B" />
                </View>
             )}
 
@@ -134,49 +166,58 @@ const styles = StyleSheet.create({
   },
   diceContainer: {
     flexDirection: 'row',
-    gap: 16,
+    flexWrap: 'wrap',
     justifyContent: 'center',
+    gap: 10,
     width: '100%',
   },
   die: {
-    width: 140,
-    height: 140,
-    borderRadius: 16,
+    width: (SCREEN_WIDTH - 80) / 3, // Responsive width
+    minWidth: 90,
+    height: 90,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
+    padding: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dieHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 6,
   },
   dieLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#94a3b8',
-    marginBottom: 8,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     fontFamily: 'PT-Sans',
+    textTransform: 'uppercase',
   },
   dieValue: {
-    fontSize: 22,
+    fontSize: 16,
     fontWeight: '800',
     textAlign: 'center',
     fontFamily: 'Playfair-Display',
   },
   resultContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 50,
+    width: '100%',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     borderWidth: 1,
+    alignItems: 'center',
   },
   resultText: {
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'PT-Sans',
+    textAlign: 'center',
+    lineHeight: 24,
   }
 });

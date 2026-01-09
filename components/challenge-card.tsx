@@ -8,6 +8,8 @@ import { type Challenge } from "@/hooks/use-weekly-challenge";
 import { smartShuffle } from "@/lib/utils";
 import * as Calendar from 'expo-calendar';
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useUser } from "@/context/user-provider";
+import { manCallsWomanNames, womanCallsManNames } from "@/lib/data";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -100,6 +102,8 @@ const Countdown = ({ expiry }: { expiry: number }) => {
 
 export function ChallengeCard({ challenge, expiry, onStart, onComplete, isCompleted }: ChallengeCardProps) {
   const [challengeImage, setChallengeImage] = useState<ImagePlaceholder | null>(null);
+  const [partnerNickname, setPartnerNickname] = useState<string | null>(null);
+  const { gender } = useUser();
   
   const textColor = useThemeColor({}, 'text');
   const mutedForeground = useThemeColor({}, 'mutedForeground');
@@ -117,8 +121,26 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
     setChallengeImage(img);
   }
 
+  const getPartnerNickname = async () => {
+    let name = "";
+    if (gender === 'woman') {
+        // Woman calls Man
+        const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
+            name = shuffledName || "Love";
+
+    } else if (gender === 'man') {
+            // Man calls Woman
+        const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
+        name = shuffledName || "Love";
+    } else {
+        name = "Love";
+    }
+    setPartnerNickname(name);
+  }
+
   useEffect(() => {
     getChallengeImage();
+    getPartnerNickname();
   }, [challenge]);
 
   const addToCalendar = async () => {
@@ -188,7 +210,8 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
   return (
     <Card style={{ overflow: 'hidden', marginBottom: 24 }}>
       <View style={styles.imageContainer}>
-         <Image source={{ uri: challengeImage.imageUrl }} style={styles.image} resizeMode="cover" />
+         <Image source={challengeImage.source} style={styles.image} resizeMode="cover" />
+         <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(85, 50, 40, 0.2)' }]} />
          <View style={styles.flameContainer}>
             {Array.from({ length: 3 }).map((_, i) => (
                 <Flame key={i} size={16} color={i < challenge.spicyLevel ? destructiveColor : mutedForeground} fill={i < challenge.spicyLevel ? destructiveColor : 'transparent'} />
@@ -197,12 +220,14 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
       </View>
 
       <View style={{ padding: 20 }}>
+        {/* We use a Text component for the title. If emojis are in challenge.text, they should render. */}
         <Text style={[styles.challengeText, { color: textColor }]}>
           "{challenge.text}"
         </Text>
         
         <View style={[styles.scriptContainer, { backgroundColor: mutedBackgroundColor }]}>
-            {renderScript(challenge.persuasionScript)}
+            {/* Emojis in persuasionScript should also render here. */}
+            {renderScript((partnerNickname ? `${partnerNickname}, ` : '') + challenge.persuasionScript.charAt(0).toLowerCase() + challenge.persuasionScript.slice(1))}
         </View>
 
         {isTimerRunning && expiry && (
@@ -246,18 +271,18 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
 
 const styles = StyleSheet.create({
     countdownContainer: { flexDirection: 'row', gap: 16, marginVertical: 8 },
-    countdownValue: { fontSize: 20, fontWeight: 'bold', fontFamily: 'Playfair-Display' },
-    countdownLabel: { fontSize: 10, fontFamily: 'PT-Sans' },
+    countdownValue: { fontSize: 20, fontWeight: 'bold', fontFamily: 'PlayfairDisplay-Regular' }, // Fixed font family name
+    countdownLabel: { fontSize: 10, fontFamily: 'PTSans-Regular' }, // Fixed font family name
     imageContainer: { height: 200, width: '100%', position: 'relative' },
     image: { width: '100%', height: '100%' },
     flameContainer: { position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 12, padding: 6, flexDirection: 'row' },
-    challengeText: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 16, fontFamily: 'Playfair-Display' },
+    challengeText: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 16, fontFamily: 'PlayfairDisplay-Regular' }, // Fixed font family name
     scriptContainer: { padding: 12, borderRadius: 8 },
-    scriptText: { lineHeight: 22, fontStyle: 'italic', fontFamily: 'PT-Sans' },
+    scriptText: { lineHeight: 22, fontStyle: 'italic', fontFamily: 'PTSans-Regular' }, // Fixed font family name
     separator: { height: 1, width: '100%', marginBottom: 16 },
     timerContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    timerText: { marginLeft: 6, fontFamily: 'PT-Sans' },
+    timerText: { marginLeft: 6, fontFamily: 'PTSans-Regular' }, // Fixed font family name
     footer: { justifyContent: 'center', padding: 20 },
     completedContainer: { flexDirection: 'row', alignItems: 'center' },
-    completedText: { marginLeft: 8, fontSize: 18, fontWeight: '600', fontFamily: 'PT-Sans' },
+    completedText: { marginLeft: 8, fontSize: 18, fontWeight: '600', fontFamily: 'PTSans-Regular' }, // Fixed font family name
 });

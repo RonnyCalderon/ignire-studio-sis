@@ -12,7 +12,6 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import Button from '@/components/ui/button';
-import Card from '@/components/ui/card';
 import { UserOnboarding } from '@/components/user-onboarding';
 import { useUser } from '@/context/user-provider';
 import { useWeeklyChallenge, type ChallengeCategory } from '@/hooks/use-weekly-challenge';
@@ -20,8 +19,9 @@ import { quotes } from '@/lib/quotes';
 import { smartShuffle } from '@/lib/utils';
 import { RefreshCw } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DashboardScreen() {
   const { partnerName, userIsKnown } = useUser();
@@ -50,7 +50,6 @@ export default function DashboardScreen() {
   useEffect(() => {
     const loadQuote = async () => {
         try {
-          // Guard against empty quotes
           if (quotes && quotes.length > 0) {
             const quote = await smartShuffle('daily_quote', quotes);
             setDailyQuote(quote);
@@ -80,13 +79,15 @@ export default function DashboardScreen() {
   }
 
   if (isLoading) {
-    return <View style={[styles.container, { backgroundColor }]}><Text style={{marginTop: 50, textAlign:'center', color: textColor}}>Loading...</Text></View>;
+    return <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}><Text style={{marginTop: 50, textAlign:'center', color: textColor}}>Loading...</Text></SafeAreaView>;
   }
 
   if (!isStarted) {
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor }]}>
-            <ChallengeSelection onSelectCategory={handleSelectCategory} quote={dailyQuote} />
+        <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+                <ChallengeSelection onSelectCategory={handleSelectCategory} quote={dailyQuote} />
+            </ScrollView>
         </SafeAreaView>
     );
   }
@@ -96,9 +97,9 @@ export default function DashboardScreen() {
 
   return (
     <>
-      <SafeAreaView style={[styles.container, { backgroundColor }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
         <ScrollView
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 120 }} // Increased padding for tab bar
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); }} />}
         >
           <View style={styles.header}>
@@ -114,16 +115,13 @@ export default function DashboardScreen() {
 
           <View style={styles.cardContainer}>
             {isRewardActive ? (
-                <Card>
                   <RewardCard
                     expiry={rewardExpiry}
                     onRewardEnd={resetChallengeState}
                     onNewChallengeClick={resetChallengeState}
                   />
-                </Card>
             ) : (
               challenge && (
-                  <Card>
                     <ChallengeCard
                         challenge={challenge}
                         expiry={expiry}
@@ -131,7 +129,6 @@ export default function DashboardScreen() {
                         onComplete={handleCompletePress}
                         isCompleted={isCompleted}
                     />
-                  </Card>
               )
             )}
           </View>

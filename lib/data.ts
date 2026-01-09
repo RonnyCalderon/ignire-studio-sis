@@ -13,3 +13,66 @@ export const rewards = [
     "Your partner has to write you a heartfelt love letter.",
     "You get control of the TV remote for a whole week."
 ];
+
+export const commonNicknames = [
+    "Baby",
+    "Love",
+    "Honey",
+    "Sweetheart",
+    "Darling",
+    "My Love"
+];
+
+export const manCallsWomanNames = [
+    ...commonNicknames,
+    ...commonNicknames,
+    ...commonNicknames,
+    "My Sacred Gift",
+    "My Living Prayer",
+    "My Soft Poetry",
+    "My Overflowing Joy",
+    "My Wholly Mine",
+    "My Sacred Belonging",
+    "My Hidden Jewel",
+    "My Private Country",
+    "My Beautiful Possession",
+    "My Daily Magic",
+    "My Sweet Normal",
+    "My Quiet Rhythm",
+    "My Home",
+    "My Eternal Prize",
+    "My Greatest Treasure",
+    "My Every Tomorrow",
+    "My Deepest Secret",
+    "My Wild Heart",
+    "My Brave Spirit",
+    "My Uncharted Star",
+    "My Limitless Girl"
+];
+
+export const womanCallsManNames = [
+    ...commonNicknames,
+    ...commonNicknames,
+    ...commonNicknames,
+    "My Safe Strength",
+    "My Master of Peace",
+    "My Artist",
+    "My Guiding Light",
+    "My Only Truth",
+    "My Heart’s Keeper",
+    "My Soul's Owner",
+    "My Only King",
+    "My One and Only",
+    "My Constant Thrill",
+    "My Favorite Rule",
+    "My Heart’s Habit",
+    "My Sanctuary",
+    "My Only Destination",
+    "My Soul's Anchor",
+    "My Forever Choice",
+    "My Life's Investment",
+    "My Bold Leader",
+    "My Fearless Soul",
+    "My Explorer",
+    "My Boundless Man"
+];

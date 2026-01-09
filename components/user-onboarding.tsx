@@ -12,14 +12,16 @@ export function UserOnboarding() {
   const { saveUser } = useUser();
   const [userName, setUserName] = useState('');
   const [partnerName, setPartnerName] = useState('');
+  const [gender, setGender] = useState('');
 
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
+  const textColor = useThemeColor({}, 'text');
   const descriptionColor = useThemeColor({ light: '#666', dark: '#999' }, 'text');
 
   const handleSubmit = () => {
-    if (userName.trim() && partnerName.trim()) {
-      saveUser(userName.trim(), partnerName.trim());
+    if (userName.trim() && partnerName.trim() && gender) {
+      saveUser(userName.trim(), partnerName.trim(), gender);
     }
   };
 
@@ -51,15 +53,22 @@ export function UserOnboarding() {
                 onChangeText={setPartnerName}
               />
             </View>
+            <View style={styles.space}>
+              <Label>You are a</Label>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
+                <Button onPress={() => setGender('woman')} variant={gender === 'woman' ? 'default' : 'outline'}><Text style={{ color: gender === 'woman' ? '#fff' : textColor }}>Woman</Text></Button>
+                <Button onPress={() => setGender('man')} variant={gender === 'man' ? 'default' : 'outline'}><Text style={{ color: gender === 'man' ? '#fff' : textColor }}>Man</Text></Button>
+              </View>
+            </View>
         </View>
 
         <View style={{ padding: 20 }}>
             <Button 
                 onPress={handleSubmit} 
                 style={{ width: '100%' }}
-                disabled={!userName || !partnerName}
+                disabled={!userName || !partnerName || !gender}
             >
-              <Text>Begin Our Adventure</Text>
+              <Text style={{ color: '#fff' }}>Begin Our Adventure</Text>
             </Button>
         </View>
       </Card>

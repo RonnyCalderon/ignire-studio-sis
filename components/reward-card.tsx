@@ -3,12 +3,16 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, use
 import Card from '@/components/ui/card';
 import Button from '@/components/ui/button';
 import { Gift, Clock, Star } from 'lucide-react-native';
-import { rewards } from '@/lib/data';
+import { rewards, manCallsWomanNames, womanCallsManNames } from '@/lib/data';
 import { placeholderImages } from '@/lib/placeholder-images';
 import { smartShuffle } from '@/lib/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { useUser } from '@/context/user-provider';
+
+// Hardcoded image for the reward card as requested
+const REWARD_CARD_IMAGE = require('@/assets/images/challenges/photo-1642655995292-191ec6b2a099.webp');
 
 const Countdown = ({ expiry, onEnd }: { expiry: number, onEnd: () => void }) => {
     const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -104,9 +108,10 @@ const StarRating = ({ reward }: { reward: string }) => {
 export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
     const { width } = useWindowDimensions();
     const [reward, setReward] = useState<string | null>(null);
-    const [rewardImage, setRewardImage] = useState<string | null>(null);
+    const [congratulatoryName, setCongratulatoryName] = useState<string | null>(null);
     const confettiRef = useRef<ConfettiCannon>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { gender } = useUser();
     
     const primaryColor = useThemeColor({}, 'primary');
     const primaryForeground = useThemeColor({}, 'primaryForeground');
@@ -125,8 +130,21 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                 const selectedReward = await smartShuffle('rewards', rewards);
                 setReward(selectedReward || "A Special Surprise");
                 
-                const img = placeholderImages.find(p => p.imageHint.includes('gift')) || placeholderImages[0];
-                setRewardImage(img ? img.imageUrl : 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48');
+                // Determine congratulatory name
+                let name = "";
+                if (gender === 'woman') {
+                    // Woman calls Man
+                    const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
+                     name = shuffledName || "My Love";
+
+                } else if (gender === 'man') {
+                     // Man calls Woman
+                    const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
+                    name = shuffledName || "My Love";
+                } else {
+                    name = "My Love";
+                }
+                setCongratulatoryName(name);
 
                 Animated.parallel([
                     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
@@ -139,12 +157,13 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
             } catch (e) {
                 console.error("Error loading reward:", e);
                 setReward("A romantic surprise");
+                setCongratulatoryName("My Love");
             } finally {
                 setIsLoading(false);
             }
         };
         loadReward();
-    }, []);
+    }, [gender]);
 
     if (isLoading) {
         return (
@@ -160,18 +179,21 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                 <Card style={[styles.card, { shadowColor: primaryColor }]}>
                     <View style={styles.headerContainer}>
                         <Image
-                            source={{ uri: rewardImage! }}
+                            source={REWARD_CARD_IMAGE}
                             style={styles.headerImage}
                             resizeMode="cover"
                         />
                         <View style={styles.imageOverlay} />
                         
                         <View style={styles.headerContentOverlay}>
-                            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 4}}>
-                                <Gift size={28} color="#FFD700" style={{ marginRight: 8 }} />
-                                <Text style={styles.headerSubtitle}>CONGRATULATIONS!</Text>
+                            <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
+                                <Gift size={24} color="#FFD700" style={{ marginRight: 8 }} />
+                                <Text style={styles.headerSubtitle}>REWARD UNLOCKED</Text>
                             </View>
-                            <Text style={[styles.headerTitle, { color: primaryForeground }]}>Reward Unlocked</Text>
+                            <Text style={[styles.headerTitle, { color: '#fff' }]}>
+                                Congratulations,{'\n'}
+                                <Text style={{ fontStyle: 'italic', fontSize: 36 }}>{congratulatoryName}</Text>
+                            </Text>
                         </View>
                     </View>
 
