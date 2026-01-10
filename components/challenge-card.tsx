@@ -19,6 +19,9 @@ interface ChallengeCardProps {
   isCompleted: boolean;
 }
 
+// Placeholder sticker image
+const STICKER_PLACEHOLDER = require('@/assets/images/stickers/sex-shop.png');
+
 async function getCalendarId(primaryColor: string): Promise<string | null> {
   if (Platform.OS === 'ios') {
       const sources = await Calendar.getSourcesAsync();
@@ -252,6 +255,9 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
             <View style={styles.completedContainer}>
                 <CheckCircle size={24} color={successColor} />
                 <Text style={[styles.completedText, { color: successColor }]}>Completed!</Text>
+                <View style={[styles.stickerBadge, { borderColor: successColor }]}>
+                     <Image source={STICKER_PLACEHOLDER} style={styles.stickerImage} resizeMode="contain" />
+                </View>
             </View>
         ) : isTimerRunning ? (
             <Button onPress={onComplete}>
@@ -285,4 +291,6 @@ const styles = StyleSheet.create({
     footer: { justifyContent: 'center', padding: 20 },
     completedContainer: { flexDirection: 'row', alignItems: 'center' },
     completedText: { marginLeft: 8, fontSize: 18, fontWeight: '600', fontFamily: 'PTSans-Regular' }, // Fixed font family name
+    stickerBadge: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, backgroundColor: '#fff', marginLeft: 12, justifyContent: 'center', alignItems: 'center' },
+    stickerImage: { width: 30, height: 30 },
 });

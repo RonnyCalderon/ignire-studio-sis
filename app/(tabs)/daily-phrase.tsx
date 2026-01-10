@@ -42,6 +42,8 @@ export default function DailyPhrasePage() {
     const mutedForeground = useThemeColor({}, 'mutedForeground');
     const destructiveColor = useThemeColor({}, 'destructive');
     const backgroundColor = useThemeColor({}, 'background');
+    
+    const partnerPossessive = gender === 'woman' ? 'his' : 'her';
 
     useEffect(() => {
         const setupPhrase = async () => {
@@ -55,15 +57,18 @@ export default function DailyPhrasePage() {
 
             try {
                 // Determine congratulatory name for completed state
+                // This name should be the name THE PARTNER calls the USER.
+                // If user is 'woman' (talking to a man), the man calls her 'manCallsWomanNames'.
+                // If user is 'man' (talking to a woman), the woman calls him 'womanCallsManNames'.
                  let name = "";
                 if (gender === 'woman') {
-                    // Woman calls Man
-                    const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
+                    // Partner is man. Man calls user (woman) names from manCallsWomanNames
+                    const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
                      name = shuffledName || "Love";
 
                 } else if (gender === 'man') {
-                     // Man calls Woman
-                    const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
+                     // Partner is woman. Woman calls user (man) names from womanCallsManNames
+                    const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
                     name = shuffledName || "Love";
                 } else {
                     name = "Love";
@@ -180,8 +185,8 @@ export default function DailyPhrasePage() {
                             <View style={styles.completedContainer}>
                                 <CheckCircle size={24} color="#2ecc71" />
                                 <Text style={styles.completedText}>
-                                    Whisper delivered,{'\n'}
-                                    <Text style={{ fontStyle: 'italic' }}>{congratulatoryName}</Text>
+                                    Your whisper is {partnerPossessive} now.{'\n'}
+                                    You are {partnerPossessive} <Text style={{ fontStyle: 'italic', fontWeight: 'bold' }}>{congratulatoryName}</Text>.
                                 </Text>
                             </View>
                         ) : (

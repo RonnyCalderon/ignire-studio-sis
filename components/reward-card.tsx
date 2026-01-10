@@ -135,14 +135,14 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                 if (gender === 'woman') {
                     // Woman calls Man
                     const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
-                     name = shuffledName || "My Love";
+                     name = shuffledName || "Love";
 
                 } else if (gender === 'man') {
                      // Man calls Woman
                     const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
-                    name = shuffledName || "My Love";
+                    name = shuffledName || "Love";
                 } else {
-                    name = "My Love";
+                    name = "Love";
                 }
                 setCongratulatoryName(name);
 
@@ -157,7 +157,7 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
             } catch (e) {
                 console.error("Error loading reward:", e);
                 setReward("A romantic surprise");
-                setCongratulatoryName("My Love");
+                setCongratulatoryName("Love");
             } finally {
                 setIsLoading(false);
             }
@@ -192,7 +192,7 @@ export function RewardCard({ expiry, onRewardEnd, onNewChallengeClick }: any) {
                             </View>
                             <Text style={[styles.headerTitle, { color: '#fff' }]}>
                                 Congratulations,{'\n'}
-                                <Text style={{ fontStyle: 'italic', fontSize: 36 }}>{congratulatoryName}</Text>
+                                <Text style={{ fontStyle: 'italic', fontSize: 36 }}>My {congratulatoryName}</Text>
                             </Text>
                         </View>
                     </View>
