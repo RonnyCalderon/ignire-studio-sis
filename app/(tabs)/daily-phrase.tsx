@@ -1,21 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions, ActivityIndicator, ScrollView } from 'react-native';
-import { useUser } from '@/context/user-provider';
-import { DailyPhrase, STRATEGIC_PHRASES } from '@/lib/daily-phrases';
-import { smartShuffle } from '@/lib/utils';
-import Card from '@/components/ui/card';
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { Heart, Clock, Gift, CheckCircle, AlertTriangle } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import Button from '@/components/ui/button';
 import { HeartAnimation } from '@/components/heart-animation';
-import { HORIZON_CYCLE } from '@/lib/horizons';
-import { manCallsWomanNames, womanCallsManNames } from '@/lib/data';
+import Button from '@/components/ui/button';
+import Card from '@/components/ui/card';
 import { UserOnboarding } from '@/components/user-onboarding';
+import { useUser } from '@/context/user-provider';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { DailyPhrase, STRATEGIC_PHRASES } from '@/lib/daily-phrases';
+import { manCallsWomanNames, womanCallsManNames } from '@/lib/data';
+import { smartShuffle } from '@/lib/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AlertTriangle, CheckCircle, Clock, Gift, Heart } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const getPhraseKey = () => `daily_phrase_data_${new Date().toISOString().split('T')[0]}`;
 const getCompletionKey = () => `daily_phrase_completed_${new Date().toISOString().split('T')[0]}`;
+
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
+
 
 const getPhaseForDay = (dayNumber: number): keyof typeof STRATEGIC_PHRASES => {
   if (dayNumber <= 14) return 'The Soil';
@@ -45,76 +48,71 @@ export default function DailyPhrasePage() {
     const backgroundColor = useThemeColor({}, 'background');
     
     const partnerPossessive = gender === 'woman' ? 'his' : 'her';
+    const character = gender === 'man' ? maleCharacter : femaleCharacter;
 
     useEffect(() => {
         const setupPhrase = async () => {
-            if (!gender || !horizonStartDate) {
-                // Wait for user data to load
-                return;
-            }
-
+            if (!gender || !horizonStartDate) return;
+    
             setIsLoading(true);
             setError(null);
-
+    
             try {
-                // Determine congratulatory name for completed state
-                // This name should be the name THE PARTNER calls the USER.
-                // If user is 'woman' (talking to a man), the man calls her 'manCallsWomanNames'.
-                // If user is 'man' (talking to a woman), the woman calls him 'womanCallsManNames'.
-                 let name = "";
+                // --- NAME LOGIC ---
+                // This is the name the PARTNER calls the USER.
+                let name = "Love";
                 if (gender === 'woman') {
-                    // Partner is man. Man calls user (woman) names from manCallsWomanNames
+                    // User is woman. Partner is man. Man calls user 'manCallsWomanNames'
                     const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
-                     name = shuffledName || "Love";
-
-                } else if (gender === 'man') {
-                     // Partner is woman. Woman calls user (man) names from womanCallsManNames
-                    const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
-                    name = shuffledName || "Love";
+                    name = shuffledName || "Mistress"; 
                 } else {
-                    name = "Love";
+                    // User is man. Partner is woman. Woman calls user 'womanCallsManNames'
+                    const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
+                    name = shuffledName || "Slave";
                 }
                 setCongratulatoryName(name);
-
-                // Check if it's time to advance to the next horizon
+    
+                // --- DATE LOGIC ---
                 const daysIntoCycle = Math.floor((new Date().getTime() - new Date(horizonStartDate).getTime()) / (1000 * 3600 * 24));
+                
                 if (daysIntoCycle > TOTAL_CYCLE_DAYS) {
                     await advanceToNextHorizon();
                     return; 
                 }
-
+    
+                // --- PHRASE SELECTION LOGIC ---
                 const storedPhrase = await AsyncStorage.getItem(getPhraseKey());
                 if (storedPhrase) {
                     setPhrase(JSON.parse(storedPhrase));
-                    
-                    const completionKey = getCompletionKey();
-                    const completedStatus = await AsyncStorage.getItem(completionKey);
+                    const completedStatus = await AsyncStorage.getItem(getCompletionKey());
                     if (completedStatus === 'true') {
                         setIsCompleted(true);
                         setIsRevealed(true);
                     }
                 } else {
                     const phase = getPhaseForDay(daysIntoCycle);
-                    const userDirection = gender === 'woman' ? 'Woman to Man' : 'Man to Woman';
+                    
+                    /** * FIX: FLIP THE DIRECTION 
+                     * If gender is 'woman' (Dominant), she needs the phrases where the 
+                     * speaker is addressing a woman leader (currently labeled 'Man to Woman').
+                     */
+                    const userDirection = gender === 'woman' ? 'Man to Woman' : 'Woman to Man';
                     
                     const relevantPhrases = STRATEGIC_PHRASES[phase]?.filter(p => p.direction === userDirection) || [];
-
+    
                     if (relevantPhrases.length === 0) {
-                        console.warn(`No phrases found for phase: ${phase}, direction: ${userDirection}`);
-                        setError("Could not find a suitable whisper for today. Please check the phrase library.");
+                        setError("Could not find a suitable whisper for today.");
                     } else {
                         const newPhrase = await smartShuffle(getPhraseKey(), relevantPhrases);
                         if (newPhrase) {
                             await AsyncStorage.setItem(getPhraseKey(), JSON.stringify(newPhrase));
                             setPhrase(newPhrase);
-                        } else {
-                            setError("Failed to select a whisper. Please try again later.");
                         }
                     }
                 }
             } catch (err) {
-                console.error("Error setting up daily phrase:", err);
-                setError("Something went wrong while preparing your daily phrase.");
+                console.error(err);
+                setError("Something went wrong.");
             } finally {
                 setIsLoading(false);
             }
@@ -165,24 +163,27 @@ export default function DailyPhrasePage() {
             <ScrollView contentContainerStyle={styles.contentContainer}>
                 <Text style={[styles.headerTitle, { color: textColor }]}>A Whisper for <Text style={{ color: primaryColor }}>{partnerName}</Text></Text>
                 
-                <Card style={[styles.card, { backgroundColor: cardColor }]}>
-                    {!isRevealed ? (
-                        <TouchableOpacity onPress={handleReveal} style={styles.revealContainer} activeOpacity={0.8}>
-                            <Gift size={width * 0.2} color={primaryColor} />
-                            <Text style={[styles.revealText, { color: primaryColor }]}>Tap to Reveal</Text>
-                            <Text style={[styles.revealSubtext, { color: mutedForeground }]}>Your secret phrase for the day is waiting.</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <View style={styles.revealedContent}>
-                            <Heart size={width * 0.15} color={primaryColor} fill={primaryColor} style={styles.icon} />
-                            <Text style={[styles.phraseText, { color: textColor }]}>"{phrase.phrase}"</Text>
-                            <View style={styles.whenContainer}>
-                                <Clock size={20} color={mutedForeground} />
-                                <Text style={[styles.whenText, { color: mutedForeground }]}>{phrase.when}</Text>
+                <View style={{position: 'relative', width: '100%', alignItems: 'center'}}>
+                    <Image source={character} style={styles.character} />
+                    <Card style={[styles.card, { backgroundColor: cardColor }]}>
+                        {!isRevealed ? (
+                            <TouchableOpacity onPress={handleReveal} style={styles.revealContainer} activeOpacity={0.8}>
+                                <Gift size={width * 0.2} color={primaryColor} />
+                                <Text style={[styles.revealText, { color: primaryColor }]}>Tap to Reveal</Text>
+                                <Text style={[styles.revealSubtext, { color: mutedForeground }]}>Your secret phrase for the day is waiting.</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={styles.revealedContent}>
+                                <Heart size={width * 0.15} color={primaryColor} fill={primaryColor} style={styles.icon} />
+                                <Text style={[styles.phraseText, { color: textColor }]}>"{phrase.phrase}"</Text>
+                                <View style={styles.whenContainer}>
+                                    <Clock size={20} color={mutedForeground} />
+                                    <Text style={[styles.whenText, { color: mutedForeground }]}>{phrase.when}</Text>
+                                </View>
                             </View>
-                        </View>
-                    )}
-                </Card>
+                        )}
+                    </Card>
+                </View>
 
                 {isRevealed && (
                     <View style={styles.buttonContainer}>
@@ -232,6 +233,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 32,
         marginBottom: 24,
+    },
+    character: {
+        position: 'absolute',
+        top: -25,
+        left: -15,
+        width: 80,
+        height: 80,
+        zIndex: 10,
+        transform: [{ rotate: '-20deg' }]
     },
     revealContainer: {
         justifyContent: 'center',

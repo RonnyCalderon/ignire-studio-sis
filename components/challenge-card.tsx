@@ -1,15 +1,15 @@
-import { View, Text, Image, Alert, Platform, StyleSheet } from "react-native";
-import Card from "@/components/ui/card";
 import Button from "@/components/ui/button";
-import { CheckCircle, Clock, Heart, Play, Flame, CalendarPlus } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { placeholderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
+import Card from "@/components/ui/card";
+import { useUser } from "@/context/user-provider";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { type Challenge } from "@/hooks/use-weekly-challenge";
+import { manCallsWomanNames, womanCallsManNames } from "@/lib/data";
+import { placeholderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 import { smartShuffle } from "@/lib/utils";
 import * as Calendar from 'expo-calendar';
-import { useThemeColor } from "@/hooks/use-theme-color";
-import { useUser } from "@/context/user-provider";
-import { manCallsWomanNames, womanCallsManNames } from "@/lib/data";
+import { CalendarPlus, CheckCircle, Clock, Flame, Heart, Play } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { Alert, Image, Platform, StyleSheet, Text, View } from "react-native";
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -244,7 +244,7 @@ export function ChallengeCard({ challenge, expiry, onStart, onComplete, isComple
              
              <Button variant="outline" onPress={addToCalendar} style={{ marginTop: 12 }}>
                 <CalendarPlus size={16} color={primaryColor} style={{ marginRight: 8 }} />
-                <Text style={{ color: primaryColor }}>Add to Calendar</Text>
+                <Text style={{ color: primaryColor }}>Invite my partner and add to calendar.</Text>
              </Button>
           </View>
         )}

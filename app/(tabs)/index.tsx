@@ -14,17 +14,20 @@ import {
 import Button from '@/components/ui/button';
 import { UserOnboarding } from '@/components/user-onboarding';
 import { useUser } from '@/context/user-provider';
+import { useThemeColor } from '@/hooks/use-theme-color';
 import { useWeeklyChallenge, type ChallengeCategory } from '@/hooks/use-weekly-challenge';
 import { quotes } from '@/lib/quotes';
 import { smartShuffle } from '@/lib/utils';
 import { RefreshCw } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
+
 export default function DashboardScreen() {
-  const { partnerName, userIsKnown } = useUser();
+  const { partnerName, userIsKnown, gender } = useUser();
   const {
     challenge,
     expiry,
@@ -46,6 +49,8 @@ export default function DashboardScreen() {
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
   const mutedForeground = useThemeColor({}, 'mutedForeground');
+
+  const character = gender === 'man' ? maleCharacter : femaleCharacter;
 
   useEffect(() => {
     const loadQuote = async () => {
@@ -114,6 +119,7 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.cardContainer}>
+             {isStarted && <Image source={character} style={styles.character} />}
             {isRewardActive ? (
                   <RewardCard
                     expiry={rewardExpiry}
@@ -173,5 +179,27 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     paddingHorizontal: 20,
+    position: 'relative',
+  },
+  character: {
+    position: 'absolute',
+    top: -20,
+    left: 0,
+    width: 70,
+    height: 70,
+    zIndex: 10,
+    transform: [{ rotate: '-15deg' }]
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarImage: {
+      width: '80%',
+      height: '80%',
   },
 });

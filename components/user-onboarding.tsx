@@ -1,23 +1,28 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useUser } from '@/context/user-provider';
 import Button from '@/components/ui/button';
+import Card from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Card from '@/components/ui/card';
-import { Flame } from 'lucide-react-native';
+import { useUser } from '@/context/user-provider';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { CheckCircle, Flame } from 'lucide-react-native';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/Cute-creatures/dominatrix2.png');
 
 export function UserOnboarding() {
   const { saveUser } = useUser();
   const [userName, setUserName] = useState('');
   const [partnerName, setPartnerName] = useState('');
-  const [gender, setGender] = useState('');
+  const [gender, setGender] = useState<'man' | 'woman' | ''>('');
 
   const backgroundColor = useThemeColor({}, 'background');
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
   const descriptionColor = useThemeColor({ light: '#666', dark: '#999' }, 'text');
+  const cardColor = useThemeColor({}, 'card');
+  const borderColor = useThemeColor({}, 'border');
 
   const handleSubmit = () => {
     if (userName.trim() && partnerName.trim() && gender) {
@@ -27,51 +32,70 @@ export function UserOnboarding() {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Card style={{ width: '100%', maxWidth: 400 }}>
-        <View style={{ alignItems: 'center', padding: 20 }}>
-            <Flame size={48} color={primaryColor} fill={primaryColor} />
-            <Text style={[styles.title, { color: primaryColor }]}>Welcome to Ignite</Text>
+        <View style={styles.header}>
+            <Flame size={48} color={primaryColor} />
+            <Text style={[styles.title, { color: textColor }]}>Welcome to Ignite</Text>
             <Text style={[styles.description, { color: descriptionColor }]}>
-                Let's personalize your journey. Tell us who you are so we can tailor this experience for you.
+            Let's get to know you and your partner to personalize your journey.
             </Text>
         </View>
-        
-        <View style={{ padding: 20 }}>
-            <View style={styles.space}>
-              <Label>Your Name</Label>
-              <Input
-                placeholder="Enter your name"
-                value={userName}
-                onChangeText={setUserName}
-              />
-            </View>
-            <View style={styles.space}>
-              <Label>Your Partner's Name</Label>
-              <Input
-                placeholder="Enter your partner's name"
-                value={partnerName}
-                onChangeText={setPartnerName}
-              />
-            </View>
-            <View style={styles.space}>
-              <Label>You are a</Label>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-                <Button onPress={() => setGender('woman')} variant={gender === 'woman' ? 'default' : 'outline'}><Text style={{ color: gender === 'woman' ? '#fff' : textColor }}>Woman</Text></Button>
-                <Button onPress={() => setGender('man')} variant={gender === 'man' ? 'default' : 'outline'}><Text style={{ color: gender === 'man' ? '#fff' : textColor }}>Man</Text></Button>
-              </View>
-            </View>
-        </View>
 
-        <View style={{ padding: 20 }}>
-            <Button 
-                onPress={handleSubmit} 
-                style={{ width: '100%' }}
-                disabled={!userName || !partnerName || !gender}
+        <Card style={styles.card}>
+            <View style={styles.stepContainer}>
+                <Label style={[styles.label, {color: textColor}]}>What's your name?</Label>
+                <Input
+                    placeholder="Your Name"
+                    value={userName}
+                    onChangeText={setUserName}
+                />
+            </View>
+
+            <View style={styles.stepContainer}>
+                <Label style={[styles.label, {color: textColor}]}>What's your partner's name?</Label>
+                <Input
+                    placeholder="Partner's Name"
+                    value={partnerName}
+                    onChangeText={setPartnerName}
+                />
+            </View>
+
+            <View style={styles.stepContainer}>
+                <Label style={[styles.label, {color: textColor}]}>I am a...</Label>
+                <View style={styles.genderSelection}>
+                    <TouchableOpacity 
+                        style={[
+                            styles.genderOption, 
+                            { borderColor: gender === 'woman' ? primaryColor : borderColor },
+                            { backgroundColor: gender === 'woman' ? cardColor : 'transparent' }
+                        ]} 
+                        onPress={() => setGender('woman')}
+                    >
+                        <Image source={femaleCharacter} style={styles.genderImage} />
+                        <Text style={[styles.genderText, { color: textColor }]}>Woman</Text>
+                        {gender === 'woman' && <CheckCircle size={20} color={primaryColor} style={styles.checkIcon} />}
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[
+                            styles.genderOption, 
+                            { borderColor: gender === 'man' ? primaryColor : borderColor },
+                            { backgroundColor: gender === 'man' ? cardColor : 'transparent' }
+                        ]} 
+                        onPress={() => setGender('man')}
+                    >
+                         <Image source={maleCharacter} style={styles.genderImage} />
+                        <Text style={[styles.genderText, { color: textColor }]}>Man</Text>
+                        {gender === 'man' && <CheckCircle size={20} color={primaryColor} style={styles.checkIcon} />}
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+            <Button
+            onPress={handleSubmit}
+            disabled={!userName.trim() || !partnerName.trim() || !gender}
             >
-              <Text style={{ color: '#fff' }}>Begin Our Adventure</Text>
+            <Text>Start Our Journey</Text>
             </Button>
-        </View>
-      </Card>
+        </Card>
     </View>
   );
 }
@@ -81,22 +105,66 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
-    marginTop: 16,
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'Playfair-Display',
-    fontWeight: 'bold',
+    fontWeight: '800',
+    marginTop: 16,
   },
   description: {
+    fontSize: 16,
+    fontFamily: 'PT-Sans',
     textAlign: 'center',
     marginTop: 8,
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: 'PT-Sans',
+    maxWidth: 300,
   },
-  space: {
-    marginBottom: 20,
+  card: {
+    width: '100%',
+    maxWidth: 400,
+    padding: 24,
+  },
+  stepContainer: {
+    marginBottom: 24,
+  },
+  label: {
+    marginBottom: 8,
+    fontFamily: 'PT-Sans',
+    fontWeight: '600'
+  },
+  genderSelection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  genderOption: {
+    flex: 1,
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    height: 150,
+  },
+  genderImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 12,
+  },
+  genderText: {
+    fontSize: 16,
+    fontFamily: 'PT-Sans',
+    fontWeight: 'bold',
+  },
+  checkIcon: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
   }
 });

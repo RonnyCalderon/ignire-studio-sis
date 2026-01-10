@@ -1,6 +1,7 @@
 import { IntimacyQuizGame } from '@/components/games/intimacy-quiz-game';
 import { PositionDiceGame } from '@/components/games/position-dice-game';
 import { ScratchCardGame } from '@/components/games/scratch-card-game';
+import { useUser } from '@/context/user-provider';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Dices, Heart, Sparkles, X } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -15,13 +16,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
+
+
 export default function ExploreScreen() {
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const mutedForeground = useThemeColor({}, 'mutedForeground');
   const cardColor = useThemeColor({}, 'card');
+  const { gender } = useUser();
 
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+
+  const character = gender === 'man' ? maleCharacter : femaleCharacter;
 
   const games = [
     {
@@ -93,6 +101,7 @@ export default function ExploreScreen() {
       edges={['top']}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
         <View style={styles.header}>
+          <Image source={character} style={styles.character} />
           <Text style={[styles.title, { color: textColor }]}>Playground</Text>
           <Text style={[styles.subtitle, { color: mutedForeground }]}>
             Sparks & Games for the weekend.
@@ -138,6 +147,16 @@ const styles = StyleSheet.create({
   header: {
     marginTop: 10,
     marginBottom: 24,
+    position: 'relative',
+  },
+  character: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 60,
+    height: 60,
+    zIndex: 10,
+    transform: [{ rotate: '15deg' }]
   },
   title: {
     fontSize: 32,

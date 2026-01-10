@@ -17,6 +17,9 @@ import ConfettiCannon from 'react-native-confetti-cannon';
 import { quotes } from '@/lib/quotes'; // Imported quotes for the popup
 import { UserOnboarding } from '@/components/user-onboarding';
 
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
+
 // --- Gamification Logic ---
 const getCurrentLevel = (completedCount: number): [Level | null, Level | null] => {
     const sortedLevels = [...levels].sort((a, b) => a.threshold - b.threshold);
@@ -105,6 +108,9 @@ export default function HistoryScreen() {
     const backgroundColor = useThemeColor({}, 'background');
     const cardColor = useThemeColor({}, 'card');
 
+    const character = gender === 'man' ? maleCharacter : femaleCharacter;
+
+
     const { completedCount, currentLevel, nextLevel, unlockedLevels, lockedLevels, sortedHistory } = useMemo(() => {
         const completedCount = history.filter(item => item.text && item.text.trim() !== '').length;
         const sorted = [...history].sort((a, b) => a.completedAt - b.completedAt);
@@ -184,6 +190,7 @@ export default function HistoryScreen() {
         <SafeAreaView style={[styles.page, { backgroundColor }]} edges={['top']}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
+                    <Image source={character} style={styles.character} />
                     <Text style={[styles.headerTitle, { color: textColor }]}>{userName} & {partnerName}'s Journey</Text>
                     <Text style={[styles.headerSubtitle, { color: mutedColor }]}>A record of our shared adventures and growth.</Text>
                 </View>
@@ -402,7 +409,16 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
     page: { flex: 1 },
     container: { padding: 16, paddingBottom: 120 }, // Increased padding bottom for tab bar
-    header: { width: '100%', alignItems: 'flex-start', marginBottom: 24, marginTop: 10 },
+    header: { width: '100%', alignItems: 'flex-start', marginBottom: 24, marginTop: 10, position: 'relative' },
+    character: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: 60,
+        height: 60,
+        zIndex: 10,
+        transform: [{ rotate: '15deg' }]
+    },
     headerTitle: { fontFamily: 'Playfair-Display', fontSize: 28, fontWeight: 'bold' },
     headerSubtitle: { fontFamily: 'PT-Sans', fontSize: 16, marginTop: 4 },
     rankCard: { width: '100%', marginBottom: 32, padding: 20 },

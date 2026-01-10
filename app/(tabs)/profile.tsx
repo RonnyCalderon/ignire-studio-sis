@@ -1,26 +1,30 @@
 import Button from "@/components/ui/button";
 import Card from "@/components/ui/card";
+import { UserOnboarding } from "@/components/user-onboarding";
 import { useUser } from "@/context/user-provider";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import {
+  disableNotifications,
+  scheduleDailyPhraseNotification,
+} from "@/lib/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  BellRing,
   Flame,
+  Heart,
   LogOut,
   ShieldCheck,
-  Trophy,
-  BellRing,
+  Trophy
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
-import { useThemeColor } from "@/hooks/use-theme-color";
+import { Image, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  scheduleDailyPhraseNotification,
-  disableNotifications,
-} from "@/lib/notifications";
-import { UserOnboarding } from "@/components/user-onboarding";
+
+const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
+const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
 
 export default function ProfileScreen() {
-  const { logout, gender, userIsKnown } = useUser();
+  const { logout, gender, userIsKnown, userName, partnerName } = useUser();
   const [stats, setStats] = useState({ completed: 0, streak: 0 });
   const [preferences, setPreferences] = useState({
     public: true,
@@ -36,6 +40,7 @@ export default function ProfileScreen() {
   const destructiveColor = useThemeColor({}, "destructive");
   const borderColor = useThemeColor({}, "border");
   const mutedColor = useThemeColor({}, "muted");
+  const cardColor = useThemeColor({}, 'card');
 
   useEffect(() => {
     const loadData = async () => {
@@ -69,6 +74,8 @@ export default function ProfileScreen() {
       disableNotifications();
     }
   };
+  
+  const character = gender === 'man' ? maleCharacter : femaleCharacter;
 
   if (!userIsKnown) {
     return <UserOnboarding />;
@@ -80,9 +87,18 @@ export default function ProfileScreen() {
       edges={["top"]}
     >
       <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={[styles.headerTitle, { color: textColor }]}>
-          Profile & Preferences
-        </Text>
+        <View style={styles.profileHeader}>
+            <View style={[styles.avatar, {backgroundColor: cardColor}]}>
+                <Image source={character} style={styles.avatarImage} />
+            </View>
+            <Text style={[styles.headerTitle, { color: textColor }]}>
+                {userName}
+            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center', opacity: 0.7}}>
+                <Heart size={14} color={primaryColor} fill={primaryColor} />
+                <Text style={[styles.partnerText, {color: mutedForeground}]}> In a relationship with {partnerName}</Text>
+            </View>
+        </View>
 
         <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
           <Card style={{ flex: 1, padding: 16, alignItems: "center" }}>
@@ -219,12 +235,31 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   contentContainer: { padding: 16, paddingBottom: 120 },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+    marginTop: 10,
+  },
+  avatar: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 16,
+  },
+  avatarImage: {
+      width: '80%',
+      height: '80%',
+  },
   headerTitle: {
     fontSize: 32,
     fontFamily: "Playfair-Display",
     fontWeight: "800",
-    marginBottom: 24,
-    marginTop: 10,
+  },
+  partnerText: {
+      fontFamily: 'PT-Sans',
+      fontSize: 14,
   },
   statValue: {
     fontSize: 24,
