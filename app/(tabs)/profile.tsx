@@ -17,9 +17,10 @@ import {
   scheduleDailyPhraseNotification,
   disableNotifications,
 } from "@/lib/notifications";
+import { UserOnboarding } from "@/components/user-onboarding";
 
 export default function ProfileScreen() {
-  const { logout, gender } = useUser();
+  const { logout, gender, userIsKnown } = useUser();
   const [stats, setStats] = useState({ completed: 0, streak: 0 });
   const [preferences, setPreferences] = useState({
     public: true,
@@ -68,6 +69,10 @@ export default function ProfileScreen() {
       disableNotifications();
     }
   };
+
+  if (!userIsKnown) {
+    return <UserOnboarding />;
+  }
 
   return (
     <SafeAreaView

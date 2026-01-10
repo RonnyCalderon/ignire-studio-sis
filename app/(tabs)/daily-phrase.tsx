@@ -12,6 +12,7 @@ import Button from '@/components/ui/button';
 import { HeartAnimation } from '@/components/heart-animation';
 import { HORIZON_CYCLE } from '@/lib/horizons';
 import { manCallsWomanNames, womanCallsManNames } from '@/lib/data';
+import { UserOnboarding } from '@/components/user-onboarding';
 
 const getPhraseKey = () => `daily_phrase_data_${new Date().toISOString().split('T')[0]}`;
 const getCompletionKey = () => `daily_phrase_completed_${new Date().toISOString().split('T')[0]}`;
@@ -26,7 +27,7 @@ const getPhaseForDay = (dayNumber: number): keyof typeof STRATEGIC_PHRASES => {
 const TOTAL_CYCLE_DAYS = 43;
 
 export default function DailyPhrasePage() {
-    const { gender, partnerName, currentHorizonIndex, horizonStartDate, advanceToNextHorizon } = useUser();
+    const { gender, partnerName, currentHorizonIndex, horizonStartDate, advanceToNextHorizon, userIsKnown } = useUser();
     const { width } = useWindowDimensions();
     const [phrase, setPhrase] = useState<DailyPhrase | null>(null);
     const [isRevealed, setIsRevealed] = useState(false);
@@ -120,6 +121,10 @@ export default function DailyPhrasePage() {
         };
         setupPhrase();
     }, [gender, horizonStartDate, currentHorizonIndex]);
+
+    if (!userIsKnown) {
+         return <UserOnboarding />;
+    }
 
     const handleReveal = () => setIsRevealed(true);
 

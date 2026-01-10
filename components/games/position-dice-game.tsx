@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, Easing, Dimensions } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, Animated, StyleSheet, Easing, Dimensions, Image } from 'react-native';
 import Button from '@/components/ui/button';
 import Card from '@/components/ui/card';
 import { Dices, RefreshCw, Sparkles, MapPin, Heart, Activity } from 'lucide-react-native';
@@ -7,12 +7,14 @@ import { actions, bodyParts, places } from '@/lib/love-dice';
 import { smartShuffle } from '@/lib/utils';
 import * as Haptics from 'expo-haptics';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { getRandomFact, GameFact } from '@/lib/game-facts';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export function PositionDiceGame() {
   const [result, setResult] = useState<{ action: string; bodyPart: string; place: string } | null>(null);
   const [isRolling, setIsRolling] = useState(false);
+  const [currentFact, setCurrentFact] = useState<GameFact | null>(null);
 
   const spinValue = useRef(new Animated.Value(0)).current;
   const scaleValue = useRef(new Animated.Value(1)).current;
@@ -28,11 +30,24 @@ export function PositionDiceGame() {
   const resultContainerBackgroundColor = useThemeColor({ light: '#fffbeb', dark: '#2A2525' }, 'background');
   const resultContainerBorderColor = useThemeColor({ light: '#fcd34d', dark: '#F59E0B' }, 'border');
   const resultTextColor = useThemeColor({ light: '#b45309', dark: '#F59E0B' }, 'text');
+  const cardBg = useThemeColor({}, 'card');
+  const mutedForeground = useThemeColor({}, 'mutedForeground');
+
+  const fetchFact = async () => {
+    const fact = await getRandomFact();
+    setCurrentFact(fact);
+  }
+
+  useEffect(() => {
+    fetchFact();
+  }, []);
 
 
   const rollDice = async () => {
     if (isRolling) return;
     setIsRolling(true);
+
+    if (Math.random() > 0.3) fetchFact();
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
@@ -133,6 +148,15 @@ export function PositionDiceGame() {
                </View>
             )}
 
+           {currentFact && (
+              <View style={styles.factContainer}>
+                <Image source={currentFact.sticker} style={styles.sticker} resizeMode="contain" />
+                <View style={[styles.speechBubble, { backgroundColor: cardBg }]}>
+                    <Text style={[styles.factText, { color: mutedForeground }]}>{currentFact.text}</Text>
+                </View>
+              </View>
+           )}
+
             <Button onPress={rollDice} disabled={isRolling} style={{ width: '100%' }}>
                 {isRolling ? (
                     <Text>Rolling...</Text>
@@ -219,5 +243,34 @@ const styles = StyleSheet.create({
     fontFamily: 'PT-Sans',
     textAlign: 'center',
     lineHeight: 24,
-  }
+  },
+    factContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        paddingHorizontal: 0,
+        paddingBottom: 0,
+        marginTop: -10,
+        marginBottom: -10
+    },
+    sticker: {
+        width: 60,
+        height: 60,
+        marginRight: -10,
+        zIndex: 10,
+        marginBottom: -5
+    },
+    speechBubble: {
+        padding: 12,
+        paddingLeft: 20,
+        borderRadius: 16,
+        flex: 1,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.1)'
+    },
+    factText: {
+        fontSize: 13,
+        fontFamily: 'PT-Sans',
+        lineHeight: 18,
+        fontStyle: 'italic'
+    },
 });

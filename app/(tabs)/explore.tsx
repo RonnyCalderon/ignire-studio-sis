@@ -62,25 +62,27 @@ export default function ExploreScreen() {
     return (
       <Modal
         animationType="slide"
-        presentationStyle="fullScreen"
+        presentationStyle="pageSheet" 
         visible={!!selectedGame}
         onRequestClose={() => setSelectedGame(null)}>
-        <SafeAreaView style={[styles.modalContainer, { backgroundColor }]} edges={['top', 'bottom']}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={() => setSelectedGame(null)}
-              style={styles.closeButton}>
-              <X size={24} color={textColor} />
-            </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: textColor }]}>
-              {game.title}
-            </Text>
-            <View style={{ width: 24 }} /> 
-          </View>
-          <ScrollView contentContainerStyle={styles.modalContent}>
-            <GameComponent />
-          </ScrollView>
-        </SafeAreaView>
+        <View style={[styles.modalContainer, { backgroundColor }]}>
+          <SafeAreaView edges={['top', 'left', 'right']} style={{ flex: 1 }}>
+            <View style={styles.modalHeader}>
+                <TouchableOpacity
+                onPress={() => setSelectedGame(null)}
+                style={styles.closeButton}>
+                <X size={24} color={textColor} />
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: textColor }]}>
+                {game.title}
+                </Text>
+                <View style={{ width: 40 }} /> 
+            </View>
+            <ScrollView contentContainerStyle={styles.modalContent}>
+                <GameComponent />
+            </ScrollView>
+          </SafeAreaView>
+        </View>
       </Modal>
     );
   };
@@ -207,12 +209,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16, // Increased vertical padding
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   closeButton: {
     padding: 8,
+    borderRadius: 20, // Make it a touch target
+    backgroundColor: 'rgba(0,0,0,0.05)', // Slight background
   },
   modalTitle: {
     fontSize: 18,

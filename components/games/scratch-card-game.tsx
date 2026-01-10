@@ -1,103 +1,46 @@
 import Button from '@/components/ui/button';
-import Card from '@/components/ui/card';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import * as Haptics from 'expo-haptics';
 import { Gift, Hand, Lock, RefreshCw } from 'lucide-react-native';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Dimensions, Platform, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Platform, StyleSheet, Text, View, Image } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
+  useAnimatedProps,
   useAnimatedStyle,
-  useDerivedValue,
   useSharedValue,
-  withTiming,
-  type SharedValue
+  withTiming
 } from 'react-native-reanimated';
+import Svg, { Defs, LinearGradient, Mask, Path, Rect, Stop } from 'react-native-svg';
+import { getRandomFact, GameFact } from '@/lib/game-facts';
 
-// 1. High-Res Scratching: Smaller blocks for smoother edges
-const SCRATCH_SIZE = 15; 
-const BRUSH_SIZE = 35;   
-const REVEAL_THRESHOLD = 2500; // Total distance dragged to trigger auto-reveal
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-// --- Components ---
-
-interface ScratchBlockProps {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  touchPos: SharedValue<{ x: number; y: number }>;
-  isRevealed: boolean;
-  color: string;
-}
-
-const ScratchBlock = React.memo(({ x, y, width, height, touchPos, isRevealed, color }: ScratchBlockProps) => {
-  const opacity = useSharedValue(1);
-  
-  // 5. Foil Texture: Slight random opacity to simulate real scratch card texture
-  const randomTexture = useMemo(() => 0.9 + Math.random() * 0.1, []); 
-  
-  const centerX = x + width / 2;
-  const centerY = y + height / 2;
-
-  useDerivedValue(() => {
-    if (isRevealed) {
-      if (opacity.value > 0) {
-        // Randomize reveal delay slightly for a "particle" effect
-        opacity.value = withTiming(0, { duration: 300 + Math.random() * 200 });
-      }
-      return;
-    }
-
-    const tp = touchPos.value;
-    const dx = tp.x - centerX;
-    const dy = tp.y - centerY;
-    const distSq = dx * dx + dy * dy;
-    
-    // Check if within brush radius
-    if (distSq < BRUSH_SIZE * BRUSH_SIZE) {
-       if (opacity.value > 0) {
-          opacity.value = withTiming(0, { duration: 50 });
-       }
-    }
-  });
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value * randomTexture,
-  }));
-
-  return (
-    <Animated.View 
-      style={[
-        styles.block, 
-        { left: x, top: y, width, height, backgroundColor: color }, 
-        style
-      ]} 
-    />
-  );
-});
+// Lower threshold to ensure it triggers more easily
+const REVEAL_THRESHOLD = 1000; 
 
 export function ScratchCardGame() {
   const [challenge, setChallenge] = useState<{ text: string, type: string } | null>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
-  const [gameId, setGameId] = useState(0); 
   const [dimensions, setDimensions] = useState({ width: 0, height: 300 });
+  const [currentFact, setCurrentFact] = useState<GameFact | null>(null);
 
-  const touchPos = useSharedValue({ x: -100, y: -100 });
+  // Store the path data as a string in a shared value
+  const pathData = useSharedValue(''); 
   const totalScratchDistance = useSharedValue(0);
+  const overlayOpacity = useSharedValue(1);
+  const scratchLayerOpacity = useSharedValue(1);
+
   const confettiRef = useRef<ConfettiCannon>(null);
 
   const primaryColor = useThemeColor({}, 'primary');
   const textColor = useThemeColor({}, 'text');
-  const subTextColor = useThemeColor({ light: '#666', dark: '#999' }, 'text');
-  const scratchColor = useThemeColor({ light: '#E5C07B', dark: '#CCA458' }, 'primary'); // Gold
   const cardBg = useThemeColor({ light: '#f3f4f6', dark: '#1f2937' }, 'card');
-
+  const mutedForeground = useThemeColor({}, 'mutedForeground');
+  
   const challenges = [
     { text: "Sensual Massage Exchange (20 mins)", type: "Foreplay" },
     { text: "Kissing session with no hands allowed", type: "Foreplay" },
@@ -111,14 +54,21 @@ export function ScratchCardGame() {
     { text: "Use an ice cube on your partner", type: "Sensation" }
   ];
 
+  const fetchFact = async () => {
+    const fact = await getRandomFact();
+    setCurrentFact(fact);
+  }
+
   const resetGame = () => {
     const randomChallenge = challenges[Math.floor(Math.random() * challenges.length)];
     setChallenge(randomChallenge);
     setIsRevealed(false);
     setHasStarted(false);
-    touchPos.value = { x: -100, y: -100 };
+    pathData.value = '';
     totalScratchDistance.value = 0;
-    setGameId(prev => prev + 1);
+    overlayOpacity.value = 1;
+    scratchLayerOpacity.value = 1;
+    fetchFact();
   };
 
   useEffect(() => {
@@ -128,6 +78,7 @@ export function ScratchCardGame() {
   const handleStartScratch = () => {
     if (!hasStarted) {
       setHasStarted(true);
+      overlayOpacity.value = withTiming(0, { duration: 300 });
     }
   };
 
@@ -139,17 +90,15 @@ export function ScratchCardGame() {
 
   const pan = Gesture.Pan()
     .onStart((g) => {
-      touchPos.value = { x: g.x, y: g.y };
       runOnJS(handleStartScratch)();
+      const newStart = `M ${g.x} ${g.y}`;
+      pathData.value = pathData.value ? `${pathData.value} ${newStart}` : newStart;
     })
     .onUpdate((g) => {
-      // 2. Auto-Complete: Track distance to estimate scratch progress
-      const dx = g.x - touchPos.value.x;
-      const dy = g.y - touchPos.value.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      totalScratchDistance.value += dist;
+      pathData.value = `${pathData.value} L ${g.x} ${g.y}`;
 
-      touchPos.value = { x: g.x, y: g.y };
+      const dist = Math.sqrt(g.changeX * g.changeX + g.changeY * g.changeY);
+      totalScratchDistance.value += dist;
 
       if (totalScratchDistance.value > REVEAL_THRESHOLD) {
          runOnJS(handleAutoReveal)();
@@ -157,107 +106,107 @@ export function ScratchCardGame() {
     })
     .onEnd(() => {
       if (Platform.OS !== 'web') {
-        // 4. Haptic Feedback: Heavy impact on end
         runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
       }
     });
+
+  const animatedProps = useAnimatedProps(() => ({
+    d: pathData.value,
+  }));
+
+  const scratchLayerStyle = useAnimatedStyle(() => ({
+    opacity: scratchLayerOpacity.value,
+  }));
 
   const handleReveal = () => {
     if (isRevealed) return;
     
     setIsRevealed(true);
-    setHasStarted(true);
+    // Reveal the whole image by fading out the scratch layer
+    scratchLayerOpacity.value = withTiming(0, { duration: 500 });
+    
     if (Platform.OS !== 'web') {
        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     
-    // 1. Confetti Explosion: Trigger fun reward
     if (confettiRef.current) {
         confettiRef.current.start();
     }
   };
 
-  const blocks = useMemo(() => {
-    if (dimensions.width === 0) return [];
-    
-    const cols = Math.ceil(dimensions.width / SCRATCH_SIZE);
-    const rows = Math.ceil(dimensions.height / SCRATCH_SIZE);
-    const blocksList = [];
-    
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        blocksList.push({
-          id: `${r}-${c}`,
-          x: c * SCRATCH_SIZE,
-          y: r * SCRATCH_SIZE,
-          width: SCRATCH_SIZE,
-          height: SCRATCH_SIZE
-        });
-      }
-    }
-    return blocksList;
-  }, [dimensions.width, dimensions.height]);
-
   if (!challenge) return null;
 
   return (
-    <Card style={{ width: '100%' }}>
-      <View style={{ alignItems: 'center', padding: 20 }}>
-        <Text style={[styles.title, { color: textColor }]}>Secret Challenges</Text>
-        <Text style={{ color: subTextColor, textAlign: 'center', fontFamily: 'PT-Sans', marginBottom: 16 }}>
-          {isRevealed ? "Challenge Revealed!" : "Scratch the card below to reveal your fate..."}
-        </Text>
-        
+    <View style={{ flex: 1, backgroundColor: 'transparent' }}>
         <View 
           style={[styles.scratchContainer, { backgroundColor: cardBg }]}
           onLayout={(e) => setDimensions({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
         >
           {/* Background Layer (The Secret Content) */}
           <View style={styles.hiddenContent}>
-             <Gift size={40} color={primaryColor} style={{ marginBottom: 16 }} />
+             <Gift size={48} color={primaryColor} style={{ marginBottom: 16, opacity: 0.9 }} />
              <Text style={[styles.challengeType, { color: primaryColor }]}>{challenge.type}</Text>
              <Text style={[styles.challengeText, { color: textColor }]}>{challenge.text}</Text>
           </View>
 
-          {/* Foreground Layer (Scratch Blocks) */}
-          {blocks.length > 0 && (
-             <GestureHandlerRootView style={StyleSheet.absoluteFill}>
+          {/* Foreground Layer (SVG with Mask) */}
+          {dimensions.width > 0 && (
+            <GestureHandlerRootView style={StyleSheet.absoluteFill} pointerEvents={isRevealed ? 'none' : 'auto'}>
                <GestureDetector gesture={pan}>
-                 <View style={{ flex: 1 }}>
-                    {blocks.map(b => (
-                      <ScratchBlock 
-                        key={`${b.id}-${gameId}`} 
-                        x={b.x} 
-                        y={b.y} 
-                        width={b.width} 
-                        height={b.height} 
-                        touchPos={touchPos}
-                        isRevealed={isRevealed}
-                        color={scratchColor}
+                 <Animated.View style={[{ flex: 1 }, scratchLayerStyle]}>
+                   <Svg height="100%" width="100%" style={StyleSheet.absoluteFill}>
+                      <Defs>
+                        <LinearGradient id="coverGradient" x1="0" y1="0" x2="1" y2="1">
+                          <Stop offset="0" stopColor="#333" stopOpacity="1" />
+                          <Stop offset="1" stopColor="#111" stopOpacity="1" />
+                        </LinearGradient>
+                        <Mask id="scratchMask">
+                          {/* White background means visible */}
+                          <Rect x="0" y="0" width="100%" height="100%" fill="white" />
+                          {/* Black path means hidden (erased) */}
+                          <AnimatedPath
+                            animatedProps={animatedProps}
+                            stroke="black"
+                            strokeWidth={60}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </Mask>
+                      </Defs>
+                      
+                      {/* The Dark Overlay, masked */}
+                      <Rect 
+                        x="0" 
+                        y="0" 
+                        width="100%" 
+                        height="100%" 
+                        fill="url(#coverGradient)" 
+                        mask="url(#scratchMask)" 
                       />
-                    ))}
-                   
+                   </Svg>
+
                    {/* Overlay displayed BEFORE scratching starts */}
-                   {!hasStarted && !isRevealed && (
-                     <View style={styles.scratchMeOverlay} pointerEvents="none">
-                        <View style={styles.deckInfo}>
-                            <Lock size={24} color="#fff" style={{ opacity: 0.8, marginBottom: 8 }} />
-                            <Text style={styles.deckTitle}>{challenge.type}</Text>
-                            <Text style={styles.deckSubtitle}>CARD DECK</Text>
-                        </View>
-
-                        <View style={styles.badge}>
-                            <Hand size={18} color="#fff" style={{ marginBottom: 4 }} />
-                            <Text style={styles.badgeText}>SCRATCH HERE</Text>
-                        </View>
-                     </View>
+                   {!hasStarted && (
+                      <Animated.View style={[styles.scratchMeOverlay, { opacity: overlayOpacity }]} pointerEvents="none">
+                          <View style={styles.deckInfo}>
+                              <Lock size={32} color="rgba(255,255,255,0.4)" style={{ marginBottom: 12 }} />
+                              <Text style={styles.deckTitle}>Scratch to</Text>
+                              <Text style={styles.deckTitleEmphasis}>Ignite</Text>
+                              
+                              <View style={styles.badge}>
+                                <Hand size={14} color="#fff" style={{ marginRight: 6 }} />
+                                <Text style={styles.badgeText}>Reveal Fate</Text>
+                              </View>
+                          </View>
+                      </Animated.View>
                    )}
-                 </View>
+                 </Animated.View>
                </GestureDetector>
-             </GestureHandlerRootView>
+            </GestureHandlerRootView>
           )}
-
-           <ConfettiCannon
+          
+          <ConfettiCannon
             ref={confettiRef}
             count={200}
             origin={{x: -10, y: 0}}
@@ -266,112 +215,153 @@ export function ScratchCardGame() {
           />
         </View>
 
+        {currentFact && (
+              <View style={styles.factContainer}>
+                <Image source={currentFact.sticker} style={styles.sticker} resizeMode="contain" />
+                <View style={[styles.speechBubble, { backgroundColor: cardBg }]}>
+                    <Text style={[styles.factText, { color: mutedForeground }]}>{currentFact.text}</Text>
+                </View>
+              </View>
+        )}
+
         <View style={styles.buttonContainer}>
-           {!isRevealed ? (
-             <Button onPress={handleReveal} variant="ghost" style={{ width: '100%' }}>
-                <Text>Or Reveal Instantly</Text>
+             <Button onPress={isRevealed ? resetGame : handleReveal} variant="default" style={{ width: '100%', backgroundColor: primaryColor, height: 56 }}>
+                {isRevealed ? (
+                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <RefreshCw size={20} color="#fff" style={{ marginRight: 10 }} />
+                      <Text style={styles.buttonText}>Next Challenge</Text>
+                   </View>
+                ) : (
+                   <Text style={styles.buttonText}>I've Tried it</Text>
+                )}
              </Button>
-           ) : (
-             <Button onPress={resetGame} variant="default" style={{ width: '100%' }}>
-                <RefreshCw size={16} color="#fff" style={{ marginRight: 8 }} />
-                <Text>Next Challenge</Text>
-             </Button>
-           )}
         </View>
 
       </View>
-    </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontFamily: 'Playfair-Display',
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
   scratchContainer: {
     width: '100%',
-    height: 300,
-    borderRadius: 12,
+    height: 350,
+    borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
-    borderColor: '#e5e7eb',
+    backgroundColor: '#fff',
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   hiddenContent: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 32,
     zIndex: 0,
   },
   challengeType: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 2,
-    marginBottom: 8,
-    fontFamily: 'PT-Sans',
+    marginBottom: 12,
+    opacity: 0.8,
+    fontFamily: Platform.select({ ios: 'System', android: 'sans-serif' }),
   },
   challengeText: {
-    fontSize: 22,
+    fontSize: 26,
     textAlign: 'center',
     fontFamily: 'Playfair-Display',
-    fontWeight: '600',
-    lineHeight: 32,
-  },
-  block: {
-    position: 'absolute',
-    borderWidth: 0, 
+    fontWeight: '700',
+    lineHeight: 36,
   },
   scratchMeOverlay: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'space-between', 
+    justifyContent: 'center', 
     alignItems: 'center',
-    paddingVertical: 60,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.3)', // Darker tint for better contrast on dark overlay
   },
   deckInfo: {
       alignItems: 'center',
+      justifyContent: 'center',
   },
   deckTitle: {
-    color: '#fff',
-    fontSize: 28,
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 24,
     fontFamily: 'Playfair-Display',
-    fontWeight: '800',
-    textShadowColor: 'rgba(0,0,0,0.3)',
+    fontWeight: '600',
+    marginBottom: -4,
+  },
+  deckTitleEmphasis: {
+    color: '#fff',
+    fontSize: 42,
+    fontFamily: 'Playfair-Display',
+    fontWeight: '900',
+    marginBottom: 20,
+    textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  deckSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 12,
-    letterSpacing: 3,
-    marginTop: 4,
-    fontFamily: 'PT-Sans',
-    fontWeight: '700',
-  },
   badge: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 100,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.8)',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 100,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
   },
   badgeText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 12,
-    letterSpacing: 1.5,
-    fontFamily: 'PT-Sans',
+    letterSpacing: 0.5,
   },
   buttonContainer: {
-    marginTop: 20,
+    marginTop: 16,
     width: '100%',
-  }
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+    factContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        paddingHorizontal: 0,
+        paddingTop: 20,
+        marginTop: 0,
+    },
+    sticker: {
+        width: 60,
+        height: 60,
+        marginRight: -10,
+        zIndex: 10,
+        marginBottom: -5
+    },
+    speechBubble: {
+        padding: 12,
+        paddingLeft: 20,
+        borderRadius: 16,
+        flex: 1,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.1)'
+    },
+    factText: {
+        fontSize: 13,
+        fontFamily: 'PT-Sans',
+        lineHeight: 18,
+        fontStyle: 'italic'
+    },
 });

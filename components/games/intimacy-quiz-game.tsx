@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager, Image } from 'react-native';
 import Card from '@/components/ui/card';
 import Button from '@/components/ui/button';
 import { intimacyQuestions, type IntimacyQuestion } from '@/lib/intimacy-quiz';
@@ -7,6 +7,7 @@ import { RefreshCw, Sparkles, ArrowRight, Trophy } from 'lucide-react-native';
 import { smartShuffle } from '@/lib/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { getRandomFact, GameFact } from '@/lib/game-facts';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -25,13 +26,21 @@ export function IntimacyQuizGame() {
   const [quizState, setQuizState] = useState<QuizState>({ level: 1, answeredInLevel: 0 });
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [currentFact, setCurrentFact] = useState<GameFact | null>(null);
 
   const primaryColor = useThemeColor({}, 'primary');
   const primaryForeground = useThemeColor({}, 'primaryForeground');
   const textColor = useThemeColor({}, 'text');
   const mutedForeground = useThemeColor({}, 'mutedForeground');
+  const cardBg = useThemeColor({}, 'card');
+
+  const fetchFact = async () => {
+    const fact = await getRandomFact();
+    setCurrentFact(fact);
+  }
 
   useEffect(() => {
+    fetchFact();
     const loadState = async () => {
         try {
             const savedStateJSON = await AsyncStorage.getItem('quizState');
@@ -61,6 +70,9 @@ export function IntimacyQuizGame() {
 
   const getNextQuestion = useCallback(async () => {
     if (showLevelUp || isCompleted) return;
+    
+    // Sometimes show a new fact on next question
+    if (Math.random() > 0.5) fetchFact();
 
     let { level, answeredInLevel } = quizState;
     const newAnsweredCount = answeredInLevel + 1;
@@ -91,6 +103,7 @@ export function IntimacyQuizGame() {
     await AsyncStorage.setItem('quizState', JSON.stringify(newState));
     setShowLevelUp(false);
     await loadNextQuestion(newLevel);
+    fetchFact();
   };
   
   const handleReset = async () => {
@@ -102,6 +115,7 @@ export function IntimacyQuizGame() {
     setShowLevelUp(false);
     setIsCompleted(false);
     await loadNextQuestion(1);
+    fetchFact();
   };
 
   const renderContent = () => {
@@ -171,9 +185,20 @@ export function IntimacyQuizGame() {
             Draw a card, take a breath, and answer openly.
         </Text>
       </View>
+      
       <View style={{ minHeight: 200, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 20 }}>
         {renderContent()}
       </View>
+
+       {currentFact && !isCompleted && !showLevelUp && (
+          <View style={styles.factContainer}>
+             <Image source={currentFact.sticker} style={styles.sticker} resizeMode="contain" />
+             <View style={[styles.speechBubble, { backgroundColor: cardBg }]}>
+                <Text style={[styles.factText, { color: mutedForeground }]}>{currentFact.text}</Text>
+             </View>
+          </View>
+       )}
+
       <View style={{ padding: 20 }}>
         {renderFooter()}
       </View>
@@ -206,5 +231,33 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 32,
         fontFamily: 'PT-Sans',
-    }
+    },
+    factContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        paddingHorizontal: 20,
+        paddingBottom: 10,
+        marginTop: 10,
+    },
+    sticker: {
+        width: 60,
+        height: 60,
+        marginRight: -10,
+        zIndex: 10,
+        marginBottom: -5
+    },
+    speechBubble: {
+        padding: 12,
+        paddingLeft: 20,
+        borderRadius: 16,
+        flex: 1,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: 'rgba(255,255,255,0.1)'
+    },
+    factText: {
+        fontSize: 13,
+        fontFamily: 'PT-Sans',
+        lineHeight: 18,
+        fontStyle: 'italic'
+    },
 });

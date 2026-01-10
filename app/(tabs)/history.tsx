@@ -15,6 +15,7 @@ import { smartShuffle } from '@/lib/utils';
 import { manCallsWomanNames, womanCallsManNames } from '@/lib/data';
 import ConfettiCannon from 'react-native-confetti-cannon';
 import { quotes } from '@/lib/quotes'; // Imported quotes for the popup
+import { UserOnboarding } from '@/components/user-onboarding';
 
 // --- Gamification Logic ---
 const getCurrentLevel = (completedCount: number): [Level | null, Level | null] => {
@@ -89,7 +90,7 @@ const RankCard = ({ level, progress, progressText }: { level: Level, progress: n
 }
 
 export default function HistoryScreen() {
-    const { userName, partnerName, gender } = useUser();
+    const { userName, partnerName, gender, userIsKnown } = useUser();
     const { history } = useWeeklyChallenge();
     const [openAccordion, setOpenAccordion] = useState<string | null>(null);
     const [showLevelUpModal, setShowLevelUpModal] = useState<Level | null>(null);
@@ -143,6 +144,10 @@ export default function HistoryScreen() {
         };
         checkLevelUp();
     }, [currentLevel, gender]);
+
+    if (!userIsKnown) {
+        return <UserOnboarding />;
+    }
 
     if (!currentLevel) {
         return (
