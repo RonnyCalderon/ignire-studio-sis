@@ -50,18 +50,28 @@ export const funFacts: GameFact[] = [
     { text: "Did you know?.. A 'gangbang' fantasy isn't about being used, but about being the center of overwhelming pleasure and attention.", sticker: stickers.polyamory },
 
     // --- Empowering & Relationship Facts for Women (with numbers/stats) ---
+    { text: "Did you know?.. Over 90% of women have regular sexual fantasies. Embracing your imagination is a healthy and powerful way to explore your own desires!", sticker: stickers.girlPower },
     { text: "Did you know?.. Over 70% of women require clitoral stimulation to reach orgasm. Understanding your own body's map is the ultimate power move!", sticker: stickers.girlPower },
+    { text: "Did you know?.. Research indicates that about 52% of women have fantasized about being 'powerfully taken' or 'dominated' in a safe, consensual setting, highlighting the allure of surrender.", sticker: stickers.dominatrix },
     { text: "Did you know?.. Research shows that 31% of women in committed relationships have fantasized about sharing their partner with another woman, often as a way to explore their own desires safely.", sticker: stickers.polyamory },
     { text: "Did you know?.. Studies suggest that for about 15% of women, the idea of being 'shared' by their partner with others (consensual non-monogamy) can significantly boost their own sexual confidence and libido.", sticker: stickers.polyamory },
     { text: "Did you know?.. A survey found that nearly 60% of women feel more empowered when they take the lead in suggesting 'new adventures' or 'exciting secrets' in the bedroom.", sticker: stickers.girlPower },
+    { text: "Did you know?.. Roughly 40% of women have fantasized about a threesome. Exploring 'what if' scenarios with your partner can actually deepen your trust and connection.", sticker: stickers.polyamory },
     { text: "Did you know?.. Women who communicate their fantasies openly are 40% more likely to report high levels of sexual satisfaction and emotional intimacy with their partner.", sticker: stickers.couple },
+    { text: "Did you know?.. Studies show that up to 50% of women have had same-sex fantasies. Sexual fluidity is a natural and common part of the female experience.", sticker: stickers.lesbian },
     { text: "Did you know?.. In many female-authored romance stories, the 'HEA' (Happily Ever After) includes the couple exploring their wildest shared thrills together, reinforcing their unbreakable bond.", sticker: stickers.love },
     { text: "Did you know?.. About 25% of women find that incorporating light 'power exchange' (D/s) elements into their intimacy helps them escape daily stress and connect with their primal needs.", sticker: stickers.dominatrix },
+    { text: "Did you know?.. About 65% of women say that a strong emotional connection with their partner makes their physical fantasies feel more intense and satisfying.", sticker: stickers.love },
     { text: "Did you know?.. The 'Swinging' lifestyle, when explored as a team, can strengthen a couple's trust by 50% as they navigate new experiences and boundaries together.", sticker: stickers.polyamory },
     { text: "Did you know?.. For many women, seeing their husband or partner being desired by others—and knowing he chose only them—acts as a powerful 'compersion' boost.", sticker: stickers.love },
     { text: "Did you know?.. Statistics show that couples who try one new sexual activity every month report 30% higher levels of relationship happiness over time.", sticker: stickers.couple },
     { text: "Did you know?.. Over 45% of women use erotica or romance novels to discover new 'deeper explorations' they'd like to try with their partner.", sticker: stickers.love },
+    { text: "Did you know?.. Nearly 60% of women find that reading erotica or 'spicy' romance novels helps them discover new fantasies and increases their overall libido.", sticker: stickers.girlPower },
+    { text: "Did you know?.. Around 35% of women have fantasized about being 'watched' (voyeurism) or being the center of attention (exhibitionism), proving that being seen is a major turn-on.", sticker: stickers.couple },
+    { text: "Did you know?.. Recent surveys show that 48% of women feel more empowered when they are the ones to initiate a new 'kinky' or adventurous roleplay session.", sticker: stickers.girlPower },
     { text: "Did you know?.. Emotional intimacy and physical pleasure are linked for 85% of women; building the heart-bond first makes the 'shared thrills' even more explosive.", sticker: stickers.love },
+    { text: "Did you know?.. Auditory arousal is powerful! About 40% of women report that hearing the sounds of others being intimate—whether in person or through a wall—is a major turn-on.", sticker: stickers.couple },
+    { text: "Did you know?.. Many women find nudist beaches liberating; around 20% of women who try social nudity report a significant boost in body confidence and sexual self-esteem.", sticker: stickers.girlPower },
 
     // --- General Empowering Facts ---
     { text: "Did you know?.. The average orgasm lasts about 20 seconds. Let's make every second count!", sticker: stickers.love },
