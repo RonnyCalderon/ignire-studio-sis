@@ -18,13 +18,28 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import { useWeeklyChallenge, type ChallengeCategory } from '@/hooks/use-weekly-challenge';
 import { quotes } from '@/lib/quotes';
 import { smartShuffle } from '@/lib/utils';
-import { RefreshCw } from 'lucide-react-native';
+import { RefreshCw, BookHeart, ChevronRight } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
-import { Image, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import Card from '@/components/ui/card';
+import { format } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
 const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
+const STORAGE_KEY = 'sex-diary-entries';
+
+type DiaryEntry = {
+    id: string;
+    date: number;
+    phrases: string[];
+    notes: string;
+    images: string[];
+    rating: number;
+    tags: string[];
+};
 
 export default function DashboardScreen() {
   const { partnerName, userIsKnown, gender } = useUser();
@@ -45,26 +60,40 @@ export default function DashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [dailyQuote, setDailyQuote] = useState<{ text: string; author: string } | null>(null);
+  const [recentDiaryEntry, setRecentDiaryEntry] = useState<DiaryEntry | null>(null);
+
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const primaryColor = useThemeColor({}, 'primary');
   const mutedForeground = useThemeColor({}, 'mutedForeground');
 
   const character = gender === 'man' ? maleCharacter : femaleCharacter;
+  const router = useRouter();
 
   useEffect(() => {
-    const loadQuote = async () => {
+    const loadData = async () => {
         try {
           if (quotes && quotes.length > 0) {
             const quote = await smartShuffle('daily_quote', quotes);
             setDailyQuote(quote);
           }
+          // Load recent diary entry
+          const savedDiary = await AsyncStorage.getItem(STORAGE_KEY);
+          if (savedDiary) {
+              const entries = JSON.parse(savedDiary);
+              if (entries.length > 0) {
+                  // Assuming entries are sorted by date desc
+                  setRecentDiaryEntry(entries[0]);
+              }
+          }
         } catch (e) {
-          console.log("Error loading quote:", e);
+          console.log("Error loading data:", e);
         }
     };
-    loadQuote();
-  }, []);
+    loadData();
+    
+    // Add listener for focus to reload diary if needed, but for simplicity we rely on refresh or initial mount
+  }, [refreshing]); // Reload when refreshing
 
   const handleSelectCategory = async (category: ChallengeCategory) => {
     await startNewChallenge(category);
@@ -92,6 +121,34 @@ export default function DashboardScreen() {
         <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
             <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
                 <ChallengeSelection onSelectCategory={handleSelectCategory} quote={dailyQuote} />
+                
+                {/* Diary Teaser for Onboarding/Start */}
+                <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+                     <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                        <Text style={[styles.sectionTitle, { color: primaryColor }]}>Your Intimacy Diary</Text>
+                        <TouchableOpacity onPress={() => router.push('/sex-diary')}>
+                            <Text style={{ color: mutedForeground, fontFamily: 'PT-Sans' }}>View All</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity onPress={() => router.push('/sex-diary')}>
+                        <Card style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }} variant="outline">
+                             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: primaryColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+                                 <BookHeart size={24} color={primaryColor} />
+                             </View>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ fontFamily: 'Playfair-Display', fontSize: 16, fontWeight: 'bold', color: textColor }}>
+                                     {recentDiaryEntry ? "Continue Writing" : "Start Your Diary"}
+                                 </Text>
+                                 <Text style={{ fontFamily: 'PT-Sans', color: mutedForeground, fontSize: 13 }}>
+                                     {recentDiaryEntry 
+                                        ? `Last entry: ${format(new Date(recentDiaryEntry.date), 'MMM d')}` 
+                                        : "Record your desires and memories."}
+                                 </Text>
+                             </View>
+                             <ChevronRight size={20} color={mutedForeground} />
+                        </Card>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -104,7 +161,7 @@ export default function DashboardScreen() {
     <>
       <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
         <ScrollView
-            contentContainerStyle={{ paddingBottom: 120 }} // Increased padding for tab bar
+            contentContainerStyle={{ paddingBottom: 120 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); }} />}
         >
           <View style={styles.header}>
@@ -138,6 +195,53 @@ export default function DashboardScreen() {
               )
             )}
           </View>
+
+          {/* Diary Section at Bottom */}
+           <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+                    <Text style={[styles.sectionTitle, { color: primaryColor }]}>Your Intimacy Diary</Text>
+                    <TouchableOpacity onPress={() => router.push('/sex-diary')}>
+                        <Text style={{ color: mutedForeground, fontFamily: 'PT-Sans' }}>View All</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {recentDiaryEntry ? (
+                    <TouchableOpacity onPress={() => router.push('/sex-diary')}>
+                        <Card style={{ padding: 16 }} variant="outline">
+                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                                <Text style={{ fontFamily: 'PT-Sans', fontWeight: 'bold', color: primaryColor, fontSize: 12 }}>
+                                    {format(new Date(recentDiaryEntry.date), 'MMMM d, yyyy')}
+                                </Text>
+                                <BookHeart size={16} color={mutedForeground} />
+                             </View>
+                             <Text style={{ fontFamily: 'Playfair-Display', fontStyle: 'italic', fontSize: 16, color: textColor, marginBottom: 8 }} numberOfLines={2}>
+                                 "{recentDiaryEntry.phrases?.[0] || recentDiaryEntry.notes || 'A special moment...'}"
+                             </Text>
+                             <Text style={{ fontFamily: 'PT-Sans', color: mutedForeground, fontSize: 12 }}>
+                                 Tap to read more...
+                             </Text>
+                        </Card>
+                    </TouchableOpacity>
+                ) : (
+                    <TouchableOpacity onPress={() => router.push('/sex-diary')}>
+                        <Card style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 16 }} variant="outline">
+                             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: primaryColor + '20', alignItems: 'center', justifyContent: 'center' }}>
+                                 <BookHeart size={24} color={primaryColor} />
+                             </View>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ fontFamily: 'Playfair-Display', fontSize: 16, fontWeight: 'bold', color: textColor }}>
+                                     Start Your Diary
+                                 </Text>
+                                 <Text style={{ fontFamily: 'PT-Sans', color: mutedForeground, fontSize: 13 }}>
+                                     Capture your intimate journey.
+                                 </Text>
+                             </View>
+                             <ChevronRight size={20} color={mutedForeground} />
+                        </Card>
+                    </TouchableOpacity>
+                )}
+            </View>
+
         </ScrollView>
       </SafeAreaView>
 
@@ -176,6 +280,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Playfair-Display',
     fontWeight: '800',
     flex: 1,
+  },
+  sectionTitle: {
+      fontSize: 20,
+      fontFamily: 'Playfair-Display',
+      fontWeight: 'bold',
   },
   cardContainer: {
     paddingHorizontal: 20,

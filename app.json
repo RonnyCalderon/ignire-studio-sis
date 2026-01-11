@@ -38,8 +38,15 @@
         "origin": false
       },
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "4cd9753c-a2f3-497d-a1c9-868751e3abe8"
       }
+    },
+    "owner": "expo_r",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4cd9753c-a2f3-497d-a1c9-868751e3abe8"
     }
   }
 }
