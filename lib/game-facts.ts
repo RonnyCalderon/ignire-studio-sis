@@ -57,7 +57,7 @@ export const funFacts: GameFact[] = [
     { text: "Did you know?.. Many find the sounds of sex just as arousing as the physical act. Don't be afraid to be vocal!", sticker: stickers.mouth },
     { text: "Did you know?.. A 'gangbang' fantasy isn't about being used, but about being the center of overwhelming pleasure and attention.", sticker: stickers.polyamory2 },
 
-    // --- Empowering & Relationship Facts for Women (with numbers/stats) ---
+    // --- Targeted Facts for Women (with numbers/stats) ---
     { text: "Did you know?.. Over 90% of women have regular sexual fantasies. Embracing your imagination is a healthy and powerful way to explore your own desires!", sticker: stickers.girlPower },
     { text: "Did you know?.. Over 70% of women require clitoral stimulation to reach orgasm. Understanding your own body's map is the ultimate power move!", sticker: stickers.girlPower },
     { text: "Did you know?.. Research indicates that about 52% of women have fantasized about being 'powerfully taken' or 'dominated' in a safe, consensual setting, highlighting the allure of surrender.", sticker: stickers.dominatrix2 },
@@ -97,10 +97,20 @@ export const funFacts: GameFact[] = [
     { text: "Did you know?.. The average male ejaculation contains between 15 million to 200 million sperm per milliliter. That's a lot of potential!", sticker: stickers.sperm },
     { text: "Did you know?.. Regular ejaculation (at least 21 times a month) has been linked in studies to a 20% lower risk of prostate cancer in men.", sticker: stickers.safeSex },
     { text: "Did you know?.. Men can experience 'dry orgasms' or multiple orgasms by practicing pelvic floor exercises (Kegels) to separate orgasm from ejaculation.", sticker: stickers.manSuit },
-    { text: "Did you know?.. The 'refractory period'—the recovery time after ejaculation—varies wildly by age and health, ranging from minutes to hours or even days.", sticker: stickers.love },
+    { text: "Did you know?.. The refractory period—the recovery time after ejaculation—varies wildly by age and health, ranging from minutes to hours or even days.", sticker: stickers.love },
     { text: "Did you know?.. Most men (about 75%) reach orgasm through penetrative sex, but almost all report that added manual or oral stimulation makes the climax far more intense.", sticker: stickers.mouth },
     { text: "Did you know?.. A man's testosterone levels naturally peak in the morning, which is why 'morning glory' is so common and often leads to the day's best sessions.", sticker: stickers.manSuit },
     { text: "Did you know?.. Ejaculate is mostly made of water, but also contains vitamin C, calcium, magnesium, and fructose (sugar) to fuel the sperm's journey.", sticker: stickers.fertilization },
+
+    // --- Anal Exploration Facts (Straight Couple Context) ---
+    { text: "Did you know?.. For women, anal stimulation can lead to 'A-spot' or G-spot orgasms indirectly because the internal structures are so close together. It's a full-pelvic experience!", sticker: stickers.plug2 },
+    { text: "Did you know?.. About 40% of straight couples have tried anal play at least once, with many finding it adds a new layer of 'taboo' excitement and trust to their relationship.", sticker: stickers.couple },
+    { text: "Did you know?.. 'Pegging' is a popular exploration for roughly 10% of straight couples, where the woman takes the lead using a strap-on, allowing the man to experience prostate pleasure.", sticker: stickers.dildo },
+    { text: "Did you know?.. The internal anal sphincter is involuntary, but the external one is under your control. Learning to 'let go' together is a powerful exercise in intimacy and trust.", sticker: stickers.love },
+    { text: "Did you know?.. Because the anus is packed with nerve endings but doesn't produce its own lubrication, using a high-quality silicone lube is the 'pro secret' for a smooth and pleasurable time.", sticker: stickers.lube },
+    { text: "Did you know?.. Many men find that light anal touch or a vibrating plug during conventional sex makes their own ejaculation feel 2x more powerful due to prostate stimulation.", sticker: stickers.plug2 },
+    { text: "Did you know?.. Exploring anal together often requires the most communication of any sexual act, which is why couples who enjoy it often report higher levels of general relationship trust.", sticker: stickers.couple },
+    { text: "Did you know?.. For women, the sensation of 'fullness' from anal play can be a huge mental turn-on, especially when paired with clitoral stimulation.", sticker: stickers.girlPower },
 
     // --- General Empowering Facts ---
     { text: "Did you know?.. The average orgasm lasts about 20 seconds. Let's make every second count!", sticker: stickers.love },
