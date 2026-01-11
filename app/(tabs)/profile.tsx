@@ -9,15 +9,17 @@ import {
 } from "@/lib/notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  AlertTriangle,
   BellRing,
   Flame,
   Heart,
   LogOut,
   ShieldCheck,
+  Trash2,
   Trophy
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
@@ -73,6 +75,28 @@ export default function ProfileScreen() {
     } else {
       disableNotifications();
     }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action is permanent and will clear all your progress.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            // Clear all data including daily phrases keys
+            const keys = await AsyncStorage.getAllKeys();
+            // Optional: You can filter keys if you want to be selective, 
+            // but for "Delete Account", AsyncStorage.clear() is the most thorough.
+            await AsyncStorage.clear();
+            logout();
+          },
+        },
+      ]
+    );
   };
   
   const character = gender === 'man' ? maleCharacter : femaleCharacter;
@@ -219,14 +243,42 @@ export default function ProfileScreen() {
           </View>
         </Card>
 
-        <Button onPress={logout} variant="outline">
-          <LogOut
-            size={16}
-            color={destructiveColor}
-            style={{ marginRight: 8 }}
-          />
-          <Text style={{ color: destructiveColor }}>Log Out</Text>
-        </Button>
+        <View style={{ gap: 12 }}>
+          <Button onPress={logout} variant="outline">
+            <LogOut
+              size={16}
+              color={textColor}
+              style={{ marginRight: 8 }}
+            />
+            <Text style={{ color: textColor }}>Log Out</Text>
+          </Button>
+
+          <Card style={{ borderColor: destructiveColor, borderWidth: 1, marginTop: 24 }}>
+            <View style={{ padding: 20 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <AlertTriangle size={20} color={destructiveColor} />
+                <Text style={[styles.dangerTitle, { color: destructiveColor, marginLeft: 8 }]}>
+                  Danger Zone
+                </Text>
+              </View>
+              <Text style={[styles.dangerDesc, { color: mutedForeground, marginBottom: 16 }]}>
+                Deleting your account will permanently erase all your progress, history, and preferences.
+              </Text>
+              <Button 
+                onPress={handleDeleteAccount} 
+                variant="outline"
+                style={{ borderColor: destructiveColor }}
+              >
+                <Trash2
+                  size={16}
+                  color={destructiveColor}
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={{ color: destructiveColor, fontWeight: '600' }}>Delete Account</Text>
+              </Button>
+            </View>
+          </Card>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -277,4 +329,13 @@ const styles = StyleSheet.create({
   prefTitle: { fontSize: 16, fontWeight: "600", fontFamily: "PT-Sans" },
   prefDesc: { fontSize: 13, fontFamily: "PT-Sans" },
   divider: { height: 1 },
+  dangerTitle: {
+    fontSize: 18,
+    fontFamily: "Playfair-Display",
+    fontWeight: "bold",
+  },
+  dangerDesc: {
+    fontSize: 14,
+    fontFamily: "PT-Sans",
+  }
 });

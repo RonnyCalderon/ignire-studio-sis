@@ -47,7 +47,19 @@ export const manCallsWomanNames = [
     "Wild Heart",
     "Brave Spirit",
     "Uncharted Star",
-    "Limitless Girl"
+    "Limitless Girl",
+    "Little Toy",
+    "Sacred Submissive",
+    "Pretty Captive",
+    "Delicate Flower",
+    "Shared Secret",
+    "Bold Adventure",
+    "Eternal Surrender",
+    "Willing Subject",
+    "Beautiful Discovery",
+    "Primal Need",
+    "Living Ecstasy",
+    "Little Bird"
 ];
 
 export const womanCallsManNames = [
@@ -74,5 +86,16 @@ export const womanCallsManNames = [
     "Bold Leader",
     "Fearless Soul",
     "Explorer",
-    "Boundless Man"
+    "Boundless Man",
+    "Master",
+    "Only Owner",
+    "Brave Explorer",
+    "Shared Thrill",
+    "Deepest Discovery",
+    "Bold Leader",
+    "Sacred Command",
+    "Beautiful Danger",
+    "Primal King",
+    "Infinite Journey",
+    "One True North"
 ];

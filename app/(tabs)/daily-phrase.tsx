@@ -13,8 +13,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const getPhraseKey = () => `daily_phrase_data_${new Date().toISOString().split('T')[0]}`;
-const getCompletionKey = () => `daily_phrase_completed_${new Date().toISOString().split('T')[0]}`;
+// Use local date string to ensure the "day" resets at midnight local time
+const getLocalDateString = (date: Date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getPhraseKey = () => `daily_phrase_data_${getLocalDateString()}`;
+const getCompletionKey = () => `daily_phrase_completed_${getLocalDateString()}`;
+const getRevealKey = () => `daily_phrase_revealed_${getLocalDateString()}`;
 
 const dominatrixIcon = require('@/assets/images/stickers/dominatrix.png');
 const maleIcon = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
@@ -70,7 +79,13 @@ export default function DailyPhrasePage() {
                 }
                 setCongratulatoryName(name);
 
-                const daysIntoCycle = Math.floor((new Date().getTime() - new Date(horizonStartDate).getTime()) / (1000 * 3600 * 24));
+                // Calculate calendar days instead of raw 24h chunks
+                const start = new Date(horizonStartDate);
+                start.setHours(0, 0, 0, 0);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const daysIntoCycle = Math.floor((now.getTime() - start.getTime()) / (1000 * 3600 * 24));
+
                 if (daysIntoCycle > TOTAL_CYCLE_DAYS) {
                     await advanceToNextHorizon();
                     return; 
@@ -80,18 +95,30 @@ export default function DailyPhrasePage() {
                 if (storedPhrase) {
                     setPhrase(JSON.parse(storedPhrase));
                     const completedStatus = await AsyncStorage.getItem(getCompletionKey());
+                    const revealedStatus = await AsyncStorage.getItem(getRevealKey());
+
                     if (completedStatus === 'true') {
                         setIsCompleted(true);
                         setIsRevealed(true);
                         revealAnim.setValue(1);
+                    } else if (revealedStatus === 'true') {
+                        setIsRevealed(true);
+                        revealAnim.setValue(1);
                     }
                 } else {
+                    // Start of a new day - reset states
+                    setIsRevealed(false);
+                    setIsCompleted(true);
+                    revealAnim.setValue(0);
+
                     const phase = getPhaseForDay(daysIntoCycle);
                     const userDirection = gender === 'woman' ? 'Man to Woman' : 'Woman to Man';
                     const relevantPhrases = STRATEGIC_PHRASES[phase]?.filter(p => p.direction === userDirection) || [];
 
                     if (relevantPhrases.length > 0) {
-                        const newPhrase = await smartShuffle(getPhraseKey(), relevantPhrases);
+                        const shuffleKey = `daily_phrase_pool_${phase}_${userDirection}`;
+                        const newPhrase = await smartShuffle(shuffleKey, relevantPhrases);
+                        
                         if (newPhrase) {
                             await AsyncStorage.setItem(getPhraseKey(), JSON.stringify(newPhrase));
                             setPhrase(newPhrase);
@@ -112,8 +139,9 @@ export default function DailyPhrasePage() {
 
     if (!userIsKnown) return <UserOnboarding />;
 
-    const handleReveal = () => {
+    const handleReveal = async () => {
         setIsRevealed(true);
+        await AsyncStorage.setItem(getRevealKey(), 'true');
         Animated.spring(revealAnim, {
             toValue: 1,
             useNativeDriver: true,

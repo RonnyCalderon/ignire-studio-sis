@@ -133,54 +133,56 @@ export default function DashboardScreen() {
             contentContainerStyle={{ paddingBottom: 120 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); setTimeout(() => setRefreshing(false), 1000); }} />}
         >
-          {/* Unified Profile Header */}
-          <View style={{ padding: 20 }}>
-             <TouchableOpacity onPress={() => router.push('/profile')}>
-                <Card style={{ padding: 24, backgroundColor: pinkBg, borderColor: '#FFB6C1', borderRadius: 30, shadowColor: deepPink, shadowOpacity: 0.1, shadowRadius: 15 }} variant="outline">
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-                         <View style={[styles.avatarContainer, { backgroundColor: '#FFF' }]}>
-                             <Image source={character} style={styles.avatarImage} resizeMode="contain" />
-                         </View>
-                         <View style={{ flex: 1 }}>
-                             <Text style={[styles.welcomeSub, { color: deepPink }]}>Welcome home,</Text>
-                             <Text style={[styles.welcomeTitle, { color: deepPink, fontSize: 24 }]}>{userName}</Text>
-                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                                 <Heart size={12} color={deepPink} fill={deepPink} />
-                                 <Text style={{ fontFamily: 'PT-Sans', fontSize: 13, color: deepPink, opacity: 0.8, fontWeight: '600' }}>Devoted to {partnerName}</Text>
-                             </View>
-                         </View>
-                         <ChevronRight size={24} color={deepPink} />
-                    </View>
-                    
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: 'rgba(255,255,255,0.6)', padding: 16, borderRadius: 24 }}>
-                         <View style={{ alignItems: 'center', gap: 4 }}>
-                             <Trophy size={18} color={deepPink} />
-                             <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{stats.completed}</Text>
-                             <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Unlocked</Text>
-                         </View>
-                         <View style={{ width: 1, backgroundColor: 'rgba(216, 27, 96, 0.2)', height: '70%', alignSelf: 'center' }} />
-                         <View style={{ alignItems: 'center', gap: 4 }}>
-                             <Flame size={18} color="#FF4500" />
-                             <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{stats.streak}</Text>
-                             <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Streak</Text>
-                         </View>
-                         <View style={{ width: 1, backgroundColor: 'rgba(216, 27, 96, 0.2)', height: '70%', alignSelf: 'center' }} />
-                         <View style={{ alignItems: 'center', gap: 4 }}>
-                             <BookHeart size={18} color={deepPink} />
-                             <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{diaryCount}</Text>
-                             <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Secrets</Text>
-                         </View>
-                    </View>
-                </Card>
-             </TouchableOpacity>
-          </View>
+          {/* Unified Profile Header - Hidden when challenge started */}
+          {!isStarted && (
+            <View style={{ padding: 20 }}>
+               <TouchableOpacity onPress={() => router.push('/profile')}>
+                  <Card style={{ padding: 24, backgroundColor: pinkBg, borderColor: '#FFB6C1', borderRadius: 30, shadowColor: deepPink, shadowOpacity: 0.1, shadowRadius: 15 }} variant="outline">
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+                           <View style={[styles.avatarContainer, { backgroundColor: '#FFF' }]}>
+                               <Image source={character} style={styles.avatarImage} resizeMode="contain" />
+                           </View>
+                           <View style={{ flex: 1 }}>
+                               <Text style={[styles.welcomeSub, { color: deepPink }]}>Welcome home,</Text>
+                               <Text style={[styles.welcomeTitle, { color: deepPink, fontSize: 24 }]}>{userName}</Text>
+                               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                                   <Heart size={12} color={deepPink} fill={deepPink} />
+                                   <Text style={{ fontFamily: 'PT-Sans', fontSize: 13, color: deepPink, opacity: 0.8, fontWeight: '600' }}>Devoted to {partnerName}</Text>
+                               </View>
+                           </View>
+                           <ChevronRight size={24} color={deepPink} />
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-around', backgroundColor: 'rgba(255,255,255,0.6)', padding: 16, borderRadius: 24 }}>
+                           <View style={{ alignItems: 'center', gap: 4 }}>
+                               <Trophy size={18} color={deepPink} />
+                               <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{stats.completed}</Text>
+                               <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Unlocked</Text>
+                           </View>
+                           <View style={{ width: 1, backgroundColor: 'rgba(216, 27, 96, 0.2)', height: '70%', alignSelf: 'center' }} />
+                           <View style={{ alignItems: 'center', gap: 4 }}>
+                               <Flame size={18} color="#FF4500" />
+                               <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{stats.streak}</Text>
+                               <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Streak</Text>
+                           </View>
+                           <View style={{ width: 1, backgroundColor: 'rgba(216, 27, 96, 0.2)', height: '70%', alignSelf: 'center' }} />
+                           <View style={{ alignItems: 'center', gap: 4 }}>
+                               <BookHeart size={18} color={deepPink} />
+                               <Text style={{ fontFamily: 'PT-Sans', fontWeight: '800', color: deepPink, fontSize: 16 }}>{diaryCount}</Text>
+                               <Text style={{ fontFamily: 'PT-Sans', fontSize: 10, color: deepPink, opacity: 0.7, fontWeight: '700', textTransform: 'uppercase' }}>Secrets</Text>
+                           </View>
+                      </View>
+                  </Card>
+               </TouchableOpacity>
+            </View>
+          )}
 
           {!isStarted ? (
              <View style={{ marginTop: 0 }}>
                 <ChallengeSelection onSelectCategory={handleSelectCategory} quote={dailyQuote} />
              </View>
           ) : (
-            <View style={styles.cardContainer}>
+            <View style={[styles.cardContainer, { marginTop: 20 }]}>
                  <View style={styles.sectionHeader}>
                     <Text style={[styles.sectionTitle, { color: deepPink }]}>
                         {isRewardActive ? "Your Sacred Reward" : "Current Invitation"}
@@ -212,7 +214,7 @@ export default function DashboardScreen() {
             </View>
           )}
 
-          {/* Diary Section */}
+          {/* Diary Section - Visible Always */}
            <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16}}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
