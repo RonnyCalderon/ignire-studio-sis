@@ -41,7 +41,7 @@ export const STRATEGIC_PHRASES: Record<string, DailyPhrase[]> = {
     },
     {
       direction: 'Man to Woman',
-      phrase: "I belong to a woman who was made for the deep water, baby. It makes me so proud to know that you are the one who chooses the speed of our journey and the secrets we decide to share.",
+      phrase: "I belong to a man who was made for the deep water, baby. It makes me so proud to know that you are the one who chooses the speed of our journey and the secrets we decide to share.",
       when: 'While walking hand-in-hand through a quiet park.',
     },
     {
@@ -72,7 +72,7 @@ export const STRATEGIC_PHRASES: Record<string, DailyPhrase[]> = {
     },
     {
       direction: 'Man to Woman',
-      phrase: "I belong to a woman who was made for the deep water, baby. It makes me so proud to know that you are the one who chooses the speed of our adventure and the secrets we keep.",
+      phrase: "I belong to a man who was made for the deep water, baby. It makes me so proud to know that you are the one who chooses the speed of our adventure and the secrets we keep.",
       when: 'While watching the sunset together or sharing a quiet drink.',
     },
     {

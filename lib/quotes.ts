@@ -308,15 +308,11 @@ export const quotes = [
     "author": "Tiffany Reisz (The Siren)"
   },
   {
-    "text": "A slave's life is mostly composed of patience and study.",
-    "author": "Laura Antoniou (The Marketplace)"
-  },
-  {
     "text": "I needed to be free to choose not to be free, get me?",
     "author": "Laura Antoniou (The Reunion)"
   },
   {
-    "text": "I had been Jonathan's slave for about a year when he told me he wanted to sell me at an auction.",
+    "text": "I had been Jonathan's slave for about a year when he told me he wanted to sell me at an auction. And I loved it.",
     "author": "Molly Weatherfield (Carrie's Story)"
   },
   {
@@ -324,7 +320,71 @@ export const quotes = [
     "author": "Molly Weatherfield (Safe Word)"
   },
   {
+    "text": "I was hers. She was mine. My body was her chariot, and she drove it into the sun. Her body was my river, and I became the sea.",
+    "author": "Gregory David Roberts (Shantaram)"
+  },
+  {
     "text": "Just because you're my Princess doesn't mean I won't fuck you like a slut.",
     "author": "Ella Dominguez (The Art of Submission)"
+  },
+  {
+    "text": "To a man like that, for whom you have feelings like that, you can say all sorts of things, 'I’m starved' being the mildest of them. Words she would never have used, before. Vandal words. Sometimes she can’t believe what comes out of her mouth; not to mention what goes into it.",
+    "author": "Margaret Atwood (The Heart Goes Last)"
+  },
+  {
+    "text": "I love you so much more now than twenty minutes ago that there cannot be comparison. I love you so much more now then when you opened your hovel door, there cannot be comparison. There is no room in my body for anything but you. My arms love you, my ears adore you, my knees shake with blind affection.",
+    "author": "William Goldman (The Princess Bride)"
+  },
+  {
+    "text": "Sometimes Gen will stop his memory there. Her skin, the night, the grass, to be outside and then to be inside Carmen. He doesn’t know to want for more because nothing in his life has been as much as this.",
+    "author": "Ann Patchett (Bel Canto)"
+  },
+  {
+    "text": "I want to love you wildly. I don't want words, but inarticulate cries, meaningless, from the bottom of my most primitive being, that flow from my belly like honey. A piercing joy that leaves me empty, conquered, silenced.",
+    "author": "Anaïs Nin"
+  },
+  {
+    "text": "His touch both consoles and devastates me; I feel my heart pulse, then wither, naked as a stone on the roaring mattress while the lovely, moony night slides through the window to dapple the flanks of this innocent who makes cages to keep the sweet birds in. Eat me, drink me; thirsty, cankered, I go back and back to him to have his fingers strip the tattered skin away and clothe me in his dress of water, this garment that drenches me, its slithering odour, its capacity for drowning.",
+    "author": "Angela Carter (The Bloody Chamber and Other Stories)"
+  },
+  {
+    "text": "I want you splayed out on the table like my own personal feast.",
+    "author": "Sarah J. Maas (A Court of Mist and Fury)"
+  },
+  {
+    "text": "So sweet and delicious do I become, when I am in bed with a man who, I sense, loves and enjoys me, that the pleasure I bring excels all delight, so the knot of love, however tight it seemed before, is tied tighter still.",
+    "author": "Veronica Franco"
+  },
+  {
+    "text": "She’s my sun and I’m her moon connected by an invisible thread, bound but free.",
+    "author": "Helena Hunting (Hooking Up)"
+  },
+  {
+    "text": "Eyes reveal the unsaid things. The innocence, the flirtations, and the naughtiness all emanate from the eyes.",
+    "author": "Avijeet Das"
+  },
+  {
+    "text": "I look at him and my body reacts in a way that it never has before, even in the throes of passion. I look at him and I start aching so deep inside it takes all I can to think, to breathe, to speak. He’s like the brightest flame and it takes everything in me to resist its call.",
+    "author": "D.L. Hess (Sir)"
+  },
+  {
+    "text": "The things I want from you, darlin’, will give you nightmares, ones like you’ve never had before. A nightmare that will have you begging me not to wake you up.",
+    "author": "Sarah Brianne (Lucca)"
+  },
+  {
+    "text": "I loved the way he kissed me, as if he had to, as if he’d go crazy if he didn’t and had nearly waited too long.",
+    "author": "Sylvia Day (Bared to You)"
+  },
+  {
+    "text": "It’s probably best for me to work off some energy before I get you naked. I’m sure you’d like to be able to walk tomorrow.",
+    "author": "Sylvia Day (Bared to You)"
+  },  
+  {
+    "text": "Her taste still teased my tongue, and her touch tipped my fingers. Her smile licked my lips, and her heartbeat my own. So I tugged on her sheets, like it was a cape. To me, she was a God damned superhero, and underneath was everything I need. Her superpowers on top of me.",
+    "author": "J. Raymond"
+  },
+  {
+    "text": "Being in love is a good thing, but it is not the best thing. The best thing is living seductively; which is about finding new ways to make the same person fall for you daily.",
+    "author": "Lebo Grand (Sensual Lifestyle)"
   }
 ];

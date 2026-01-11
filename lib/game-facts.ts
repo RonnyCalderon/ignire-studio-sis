@@ -23,7 +23,7 @@ const stickers = {
 };
 
 export const funFacts: GameFact[] = [
-    // --- Targeted Facts for Exploration (Combined & Expanded) ---
+    // --- Targeted Facts for Exploration ---
     { text: "Did you know?.. Anal play is all about relaxation and the 'ring' of muscles. With high-quality lube and a slow pace, it can unlock entirely new levels of pleasure.", sticker: stickers.dildo },
     { text: "Did you know?.. Double penetration (DP) is a common fantasy! It's all about trust and communication to find the rhythm that feels most comfortable for you.", sticker: stickers.dildo },
     { text: "Did you know?.. Same-sex encounters often emphasize a 'full-body' experience, focusing on variety and emotional connection that can lead to deeper satisfaction.", sticker: stickers.lesbian },
@@ -49,7 +49,21 @@ export const funFacts: GameFact[] = [
     { text: "Did you know?.. Many find the sounds of sex just as arousing as the physical act. Don't be afraid to be vocal!", sticker: stickers.couple },
     { text: "Did you know?.. A 'gangbang' fantasy isn't about being used, but about being the center of overwhelming pleasure and attention.", sticker: stickers.polyamory },
 
-    // --- General Empowering Facts (Reduced) ---
+    // --- Empowering & Relationship Facts for Women (with numbers/stats) ---
+    { text: "Did you know?.. Over 70% of women require clitoral stimulation to reach orgasm. Understanding your own body's map is the ultimate power move!", sticker: stickers.girlPower },
+    { text: "Did you know?.. Research shows that 31% of women in committed relationships have fantasized about sharing their partner with another woman, often as a way to explore their own desires safely.", sticker: stickers.polyamory },
+    { text: "Did you know?.. Studies suggest that for about 15% of women, the idea of being 'shared' by their partner with others (consensual non-monogamy) can significantly boost their own sexual confidence and libido.", sticker: stickers.polyamory },
+    { text: "Did you know?.. A survey found that nearly 60% of women feel more empowered when they take the lead in suggesting 'new adventures' or 'exciting secrets' in the bedroom.", sticker: stickers.girlPower },
+    { text: "Did you know?.. Women who communicate their fantasies openly are 40% more likely to report high levels of sexual satisfaction and emotional intimacy with their partner.", sticker: stickers.couple },
+    { text: "Did you know?.. In many female-authored romance stories, the 'HEA' (Happily Ever After) includes the couple exploring their wildest shared thrills together, reinforcing their unbreakable bond.", sticker: stickers.love },
+    { text: "Did you know?.. About 25% of women find that incorporating light 'power exchange' (D/s) elements into their intimacy helps them escape daily stress and connect with their primal needs.", sticker: stickers.dominatrix },
+    { text: "Did you know?.. The 'Swinging' lifestyle, when explored as a team, can strengthen a couple's trust by 50% as they navigate new experiences and boundaries together.", sticker: stickers.polyamory },
+    { text: "Did you know?.. For many women, seeing their husband or partner being desired by others—and knowing he chose only them—acts as a powerful 'compersion' boost.", sticker: stickers.love },
+    { text: "Did you know?.. Statistics show that couples who try one new sexual activity every month report 30% higher levels of relationship happiness over time.", sticker: stickers.couple },
+    { text: "Did you know?.. Over 45% of women use erotica or romance novels to discover new 'deeper explorations' they'd like to try with their partner.", sticker: stickers.love },
+    { text: "Did you know?.. Emotional intimacy and physical pleasure are linked for 85% of women; building the heart-bond first makes the 'shared thrills' even more explosive.", sticker: stickers.love },
+
+    // --- General Empowering Facts ---
     { text: "Did you know?.. The average orgasm lasts about 20 seconds. Let's make every second count!", sticker: stickers.love },
     { text: "Did you know?.. Communication is the biggest aphrodisiac. Talking about your desires is the first step to living them out.", sticker: stickers.couple },
     { text: "Did you know?.. Lube isn't just for when you're 'not wet enough'—it makes everything feel better and more sensitive for everyone.", sticker: stickers.dildo },

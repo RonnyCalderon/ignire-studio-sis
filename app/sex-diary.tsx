@@ -18,6 +18,7 @@ import { Alert, FlatList, Image, KeyboardAvoidingView, Modal, Platform, ScrollVi
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const STORAGE_KEY = 'sex-diary-entries';
+const dominatrixIcon = require('@/assets/images/stickers/dominatrix.png');
 
 type DiaryEntry = {
     id: string;
@@ -168,40 +169,17 @@ export default function SexDiaryScreen() {
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ['images'],
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             quality: 0.8,
         });
 
         if (!result.canceled) {
             const assetUri = result.assets[0].uri;
-            const fileName = assetUri.split('/').pop();
-            const newPath = FileSystem.documentDirectory + (fileName || `image-${Date.now()}.jpg`);
-            
-            try {
-                if (Platform.OS !== 'web') {
-                     await FileSystem.copyAsync({
-                        from: assetUri,
-                        to: newPath
-                    });
-                    setCurrentEntry(prev => ({
-                        ...prev,
-                        images: [...(prev.images || []), newPath]
-                    }));
-                } else {
-                    setCurrentEntry(prev => ({
-                        ...prev,
-                        images: [...(prev.images || []), assetUri]
-                    }));
-                }
-               
-            } catch (e) {
-                console.error("Error handling image:", e);
-                 setCurrentEntry(prev => ({
-                    ...prev,
-                    images: [...(prev.images || []), assetUri]
-                }));
-            }
+            setCurrentEntry(prev => ({
+                ...prev,
+                images: [...(prev.images || []), assetUri]
+            }));
         }
     };
 
@@ -286,8 +264,15 @@ export default function SexDiaryScreen() {
 
             {entries.length === 0 ? (
                 <View style={styles.emptyState}>
-                    <MaterialCommunityIcons name="book-open-page-variant" size={64} color={mutedColor} />
-                    <Text style={[styles.emptyText, { color: mutedColor }]}>Your diary is empty. Start recording your adventures.</Text>
+                     <Image source={dominatrixIcon} style={{ width: 120, height: 120, marginBottom: 20 }} />
+                    <Text style={[styles.emptyStateTitle, { color: primaryColor }]}>The Page is Bare...</Text>
+                    <Text style={[styles.emptyText, { color: mutedColor }]}>
+                        ...but the night is full of possibilities. Don't let these moments fade away.
+                        Tell me everything. Your secrets are safe with me.
+                    </Text>
+                    <TouchableOpacity onPress={() => { setCurrentEntry({}); setIsEditing(true); }} style={[styles.emptyStateButton, { backgroundColor: primaryColor }]}>
+                        <Text style={styles.emptyStateButtonText}>Create Your First Entry</Text>
+                    </TouchableOpacity>
                 </View>
             ) : (
                 <FlatList
@@ -300,69 +285,70 @@ export default function SexDiaryScreen() {
 
             {/* Edit Modal */}
             <Modal visible={isEditing} animationType="slide" presentationStyle="pageSheet">
-                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={[styles.modalContainer, { backgroundColor }]}>
+                <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={[styles.modalContainer, { backgroundColor: '#FFD1DC' }]}>
                     <View style={styles.modalHeader}>
                         <TouchableOpacity onPress={() => setIsEditing(false)} style={{padding: 8}}>
-                            <Text style={[styles.modalCancel, { color: mutedColor }]}>Cancel</Text>
+                            <Text style={[styles.modalCancel, { color: '#D81B60' }]}>Cancel</Text>
                         </TouchableOpacity>
-                        <Text style={[styles.modalTitle, { color: textColor }]}>New Entry</Text>
+                        <Text style={[styles.modalTitle, { color: '#D81B60' }]}>New Memory</Text>
                         <TouchableOpacity onPress={saveEntry} style={{padding: 8}}>
-                            <Text style={[styles.modalSave, { color: primaryColor }]}>Save</Text>
+                            <Text style={[styles.modalSave, { color: '#D81B60' }]}>Save</Text>
                         </TouchableOpacity>
                     </View>
                     
                     <ScrollView contentContainerStyle={styles.modalContent}>
+                         <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                            <Image source={dominatrixIcon} style={{ width: 80, height: 80 }} resizeMode="contain" />
+                            <Text style={{ fontFamily: 'Playfair-Display', fontSize: 20, fontWeight: 'bold', color: '#D81B60', marginTop: 10 }}>Ready to spill the tea?</Text>
+                        </View>
+
                         <View style={styles.sectionContainer}>
-                            <Text style={[styles.label, { color: textColor }]}>Intensity</Text>
+                            <Text style={[styles.label, { color: '#D81B60' }]}>Intensity</Text>
                             <View style={styles.ratingSelector}>
                                 {Array.from({ length: 5 }).map((_, i) => (
                                     <TouchableOpacity key={i} onPress={() => setCurrentEntry(prev => ({ ...prev, rating: i + 1 }))}>
                                         <Flame 
                                             size={32} 
-                                            color={i < (currentEntry.rating || 0) ? destructiveColor : '#e0e0e0'} 
-                                            fill={i < (currentEntry.rating || 0) ? destructiveColor : 'transparent'} 
+                                            color={i < (currentEntry.rating || 0) ? '#D81B60' : '#FFB6C1'} 
+                                            fill={i < (currentEntry.rating || 0) ? '#D81B60' : 'transparent'} 
                                         />
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
-                        <Text style={[styles.label, { color: textColor }]}>What happened today?</Text>
+                        <Text style={[styles.label, { color: '#D81B60' }]}>Spill the details...</Text>
                         
                         {/* Inspiration Buttons Area */}
                         <View style={{ marginBottom: 12, flexDirection: 'row', gap: 8 }}>
-                        <TouchableOpacity 
-                                style={[styles.actionButton, { borderColor: primaryColor, flex: 1 }]} 
+                            <TouchableOpacity 
+                                style={[styles.actionButton, { borderColor: '#D81B60', flex: 1, backgroundColor: '#FFF0F5' }]} 
                                 onPress={handleOpenInspiration}
                             >
-                                <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={primaryColor} />
-                                <Text style={[styles.actionButtonText, { color: primaryColor }]}>
-                                    Find words...
-                                </Text>
+                                <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color="#D81B60" />
+                                <Text style={[styles.actionButtonText, { color: '#D81B60' }]}>Find words...</Text>
                             </TouchableOpacity>
                             <TouchableOpacity 
-                                style={[styles.actionButton, { borderColor: mutedColor, flex: 1 }]} 
+                                style={[styles.actionButton, { borderColor: '#D81B60', flex: 1, backgroundColor: '#FFF0F5' }]} 
                                 onPress={handleAddQuote}
                             >
-                                <MaterialCommunityIcons name="format-quote-close" size={20} color={mutedColor} />
-                                <Text style={[styles.actionButtonText, { color: mutedColor }]}>
-                                    Shuffle Quote
-                                </Text>
+                                <MaterialCommunityIcons name="format-quote-close" size={20} color="#D81B60" />
+                                <Text style={[styles.actionButtonText, { color: '#D81B60' }]}>Shuffle Quote</Text>
                             </TouchableOpacity>
                         </View>
 
                         {currentEntry.quote && (
-                            <View style={[styles.quoteContainer, { borderColor: primaryColor, marginBottom: 12, borderLeftWidth: 4, paddingLeft: 12 }]}>
-                                <Text style={[styles.quoteText, { color: textColor }]}>"{currentEntry.quote.text}"</Text>
-                                <Text style={[styles.quoteAuthor, { color: mutedColor }]}>— {currentEntry.quote.author}</Text>
+                            <View style={[styles.quoteContainer, { borderColor: '#D81B60', marginBottom: 12, borderLeftWidth: 4, paddingLeft: 12 }]}>
+                                <Text style={[styles.quoteText, { color: '#D81B60' }]}>"{currentEntry.quote.text}"</Text>
+                                <Text style={[styles.quoteAuthor, { color: '#D81B60', opacity: 0.7 }]}>— {currentEntry.quote.author}</Text>
                             </View>
                         )}
 
                         <TextInput
-                            style={[styles.input, { color: textColor, borderColor: borderColor }]}
+                            style={[styles.input, { color: '#D81B60', borderColor: '#FFB6C1', backgroundColor: '#FFF0F5' }]}
                             multiline
                             placeholder="Describe your intimate moments..."
-                            placeholderTextColor={mutedColor}
+                            placeholderTextColor="#FFB6C1"
                             value={currentEntry.notes}
                             onChangeText={text => setCurrentEntry(prev => ({ ...prev, notes: text }))}
                         />
@@ -370,10 +356,10 @@ export default function SexDiaryScreen() {
                         {/* Stickers Section */}
                         <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeader}>
-                                <Text style={[styles.label, { color: textColor, marginBottom: 0 }]}>Stickers</Text>
+                                <Text style={[styles.label, { color: '#D81B60', marginBottom: 0 }]}>Stickers</Text>
                                 <TouchableOpacity onPress={() => setShowStickerModal(true)} style={{flexDirection: 'row', alignItems: 'center'}}>
-                                    <Sticker size={20} color={primaryColor} style={{marginRight: 4}}/>
-                                    <Text style={{color: primaryColor, fontFamily: 'PT-Sans', fontWeight: 'bold'}}>Add Sticker</Text>
+                                    <MaterialCommunityIcons name="sticker-emoji" size={20} color="#D81B60" style={{marginRight: 4}}/>
+                                    <Text style={{color: '#D81B60', fontFamily: 'PT-Sans', fontWeight: 'bold'}}>Add Sticker</Text>
                                 </TouchableOpacity>
                             </View>
                             
@@ -385,16 +371,16 @@ export default function SexDiaryScreen() {
                                         <View key={i} style={styles.previewStickerContainer}>
                                             <Image source={level.rewardSticker} style={styles.previewSticker} resizeMode="contain" />
                                             <TouchableOpacity 
-                                                style={styles.removeImage} 
+                                                style={styles.removeSticker} 
                                                 onPress={() => removeSticker(i)}
                                             >
-                                                <Ionicons name="close-circle" size={20} color="white" />
+                                                <Ionicons name="close-circle" size={20} color="#D81B60" />
                                             </TouchableOpacity>
                                         </View>
                                     )
                                 })}
                                 {(!currentEntry.stickers || currentEntry.stickers.length === 0) && (
-                                     <Text style={{color: mutedColor, fontFamily: 'PT-Sans', fontStyle: 'italic', paddingVertical: 10}}>No stickers added.</Text>
+                                     <Text style={{color: '#D81B60', fontFamily: 'PT-Sans', fontStyle: 'italic', paddingVertical: 10, opacity: 0.6}}>No stickers added.</Text>
                                 )}
                             </ScrollView>
                         </View>
@@ -402,10 +388,10 @@ export default function SexDiaryScreen() {
                         {/* Photos Section */}
                         <View style={styles.sectionContainer}>
                             <View style={styles.sectionHeader}>
-                                <Text style={[styles.label, { color: textColor, marginBottom: 0 }]}>Memories</Text>
+                                <Text style={[styles.label, { color: '#D81B60', marginBottom: 0 }]}>Memories</Text>
                                 <TouchableOpacity onPress={pickImage} style={{flexDirection: 'row', alignItems: 'center'}}>
-                                    <Ionicons name="camera" size={20} color={primaryColor} style={{marginRight: 4}}/>
-                                    <Text style={{color: primaryColor, fontFamily: 'PT-Sans', fontWeight: 'bold'}}>Add Photo</Text>
+                                    <Ionicons name="camera" size={20} color="#D81B60" style={{marginRight: 4}}/>
+                                    <Text style={{color: '#D81B60', fontFamily: 'PT-Sans', fontWeight: 'bold'}}>Add Photo</Text>
                                 </TouchableOpacity>
                             </View>
 
@@ -417,12 +403,12 @@ export default function SexDiaryScreen() {
                                             style={styles.removeImage} 
                                             onPress={() => setCurrentEntry(prev => ({ ...prev, images: prev.images?.filter((_, idx) => idx !== i) }))}
                                         >
-                                            <Ionicons name="close-circle" size={24} color="white" />
+                                            <Ionicons name="close-circle" size={24} color="#D81B60" />
                                         </TouchableOpacity>
                                     </View>
                                 ))}
                                 {(!currentEntry.images || currentEntry.images.length === 0) && (
-                                     <Text style={{color: mutedColor, fontFamily: 'PT-Sans', fontStyle: 'italic', paddingVertical: 10}}>No photos added yet.</Text>
+                                     <Text style={{color: '#D81B60', fontFamily: 'PT-Sans', fontStyle: 'italic', paddingVertical: 10, opacity: 0.6}}>No photos added yet.</Text>
                                 )}
                             </ScrollView>
                         </View>
@@ -434,24 +420,24 @@ export default function SexDiaryScreen() {
                  {showIdeasModal && (
                     <Modal visible={showIdeasModal} animationType="slide" transparent>
                         <View style={styles.phraseModalOverlay}>
-                            <View style={[styles.phraseModalContent, { backgroundColor: cardColor, height: '65%' }]}>
+                            <View style={[styles.phraseModalContent, { backgroundColor: '#FFD1DC', height: '65%' }]}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                    <Text style={[styles.modalTitle, { color: textColor }]}>Tap to Describe</Text>
+                                    <Text style={[styles.modalTitle, { color: '#D81B60' }]}>Tap to Describe</Text>
                                     <TouchableOpacity onPress={() => setShowIdeasModal(false)}>
-                                        <Ionicons name="close" size={24} color={mutedColor} />
+                                        <Ionicons name="close" size={24} color="#D81B60" />
                                     </TouchableOpacity>
                                 </View>
-                                <Text style={{ fontFamily: 'PT-Sans', color: mutedColor, marginBottom: 16 }}>
+                                <Text style={{ fontFamily: 'PT-Sans', color: '#D81B60', marginBottom: 16 }}>
                                     Choose a phrase that resonates with your encounter:
                                 </Text>
                                 <ScrollView contentContainerStyle={styles.ideasGrid}>
                                     {randomIdeas.map((idea, index) => (
                                         <TouchableOpacity 
                                             key={index}
-                                            style={[styles.ideaChip, { backgroundColor: backgroundColor, borderColor: primaryColor }]}
+                                            style={[styles.ideaChip, { backgroundColor: '#FFF0F5', borderColor: '#D81B60' }]}
                                             onPress={() => handleSelectIdea(idea)}
                                         >
-                                            <Text style={[styles.ideaChipText, { color: textColor }]}>
+                                            <Text style={[styles.ideaChipText, { color: '#D81B60' }]}>
                                                 {idea.phrase}
                                             </Text>
                                         </TouchableOpacity>
@@ -461,7 +447,7 @@ export default function SexDiaryScreen() {
                                     style={{ alignSelf: 'center', marginTop: 16 }}
                                     onPress={() => setRandomIdeas(getRandomIdeas(gender, 6))}
                                 >
-                                    <View style={[styles.shuffleButton, { backgroundColor: primaryColor }]}>
+                                    <View style={[styles.shuffleButton, { backgroundColor: '#D81B60' }]}>
                                         <Ionicons name="refresh" size={18} color="#fff" style={{marginRight: 8}} />
                                         <Text style={{ color: '#fff', fontFamily: 'PT-Sans', fontWeight: 'bold', fontSize: 16 }}>Shuffle Ideas</Text>
                                     </View>
@@ -475,11 +461,11 @@ export default function SexDiaryScreen() {
                 {showStickerModal && (
                     <Modal visible={showStickerModal} animationType="slide" transparent>
                         <View style={styles.phraseModalOverlay}>
-                            <View style={[styles.phraseModalContent, { backgroundColor: cardColor, height: '50%' }]}>
+                            <View style={[styles.phraseModalContent, { backgroundColor: '#FFD1DC', height: '50%' }]}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                                    <Text style={[styles.modalTitle, { color: textColor }]}>Select Sticker</Text>
+                                    <Text style={[styles.modalTitle, { color: '#D81B60' }]}>Select Sticker</Text>
                                     <TouchableOpacity onPress={() => setShowStickerModal(false)}>
-                                        <Ionicons name="close" size={24} color={mutedColor} />
+                                        <Ionicons name="close" size={24} color="#D81B60" />
                                     </TouchableOpacity>
                                 </View>
                                 <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' }}>
@@ -489,13 +475,13 @@ export default function SexDiaryScreen() {
                                             onPress={() => handleAddSticker(level.level)}
                                             style={{ alignItems: 'center' }}
                                         >
-                                            <View style={[styles.stickerContainer, { borderColor: primaryColor }]}>
+                                            <View style={[styles.stickerContainer, { borderColor: '#D81B60', backgroundColor: '#FFF0F5' }]}>
                                                 <Image source={level.rewardSticker} style={styles.stickerImage} resizeMode="contain" />
                                             </View>
-                                            <Text style={{ fontSize: 10, marginTop: 4, color: mutedColor, fontFamily: 'PT-Sans' }}>{level.title}</Text>
+                                            <Text style={{ fontSize: 10, marginTop: 4, color: '#D81B60', fontFamily: 'PT-Sans' }}>{level.title}</Text>
                                         </TouchableOpacity>
                                     )) : (
-                                        <Text style={{ fontFamily: 'PT-Sans', color: mutedColor, textAlign: 'center', marginTop: 20 }}>
+                                        <Text style={{ fontFamily: 'PT-Sans', color: '#D81B60', textAlign: 'center', marginTop: 20 }}>
                                             No stickers unlocked yet. Keep playing to earn rewards!
                                         </Text>
                                     )}
@@ -516,7 +502,10 @@ const styles = StyleSheet.create({
     title: { fontFamily: 'Playfair-Display', fontSize: 28, fontWeight: 'bold', flex: 1 },
     addButton: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
     emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-    emptyText: { fontFamily: 'PT-Sans', fontSize: 16, textAlign: 'center', marginTop: 16 },
+    emptyStateTitle: { fontFamily: 'Playfair-Display', fontSize: 24, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
+    emptyText: { fontFamily: 'PT-Sans', fontSize: 16, textAlign: 'center', marginTop: 16, lineHeight: 24 },
+    emptyStateButton: { marginTop: 30, paddingVertical: 12, paddingHorizontal: 30, borderRadius: 25 },
+    emptyStateButtonText: { color: '#fff', fontFamily: 'PT-Sans', fontWeight: 'bold', fontSize: 16 },
     listContent: { padding: 16, paddingBottom: 100 },
     entryCard: { padding: 16, marginBottom: 16 },
     entryHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
@@ -542,10 +531,11 @@ const styles = StyleSheet.create({
     previewSticker: { width: 60, height: 60 },
     stickerContainer: { width: 80, height: 80, borderRadius: 40, borderWidth: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
     stickerImage: { width: 60, height: 60 },
+    removeSticker: { position: 'absolute', top: -5, right: -5 },
 
     // Edit Modal
     modalContainer: { flex: 1, paddingTop: 20 },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#eee' },
+    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#FFB6C1' },
     modalTitle: { fontFamily: 'Playfair-Display', fontSize: 18, fontWeight: 'bold' },
     modalCancel: { fontFamily: 'PT-Sans', fontSize: 16 },
     modalSave: { fontFamily: 'PT-Sans', fontSize: 16, fontWeight: 'bold' },
@@ -558,7 +548,7 @@ const styles = StyleSheet.create({
     imagePreviewScroll: { flexDirection: 'row', marginTop: 8 },
     previewImageContainer: { position: 'relative', marginRight: 12 },
     previewImage: { width: 100, height: 100, borderRadius: 8 },
-    removeImage: { position: 'absolute', top: -8, right: -8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12 },
+    removeImage: { position: 'absolute', top: -8, right: -8, backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 12 },
     
     // Action Buttons
     actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, borderWidth: 1, borderStyle: 'dashed' },

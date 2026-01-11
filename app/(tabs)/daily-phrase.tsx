@@ -8,17 +8,16 @@ import { DailyPhrase, STRATEGIC_PHRASES } from '@/lib/daily-phrases';
 import { manCallsWomanNames, womanCallsManNames } from '@/lib/data';
 import { smartShuffle } from '@/lib/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AlertTriangle, CheckCircle, Clock, Gift, Heart } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { CheckCircle, Clock, Gift, Heart, Sparkles, X } from 'lucide-react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const getPhraseKey = () => `daily_phrase_data_${new Date().toISOString().split('T')[0]}`;
 const getCompletionKey = () => `daily_phrase_completed_${new Date().toISOString().split('T')[0]}`;
 
-const maleCharacter = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
-const femaleCharacter = require('@/assets/images/stickers/dominatrix2.png');
-
+const dominatrixIcon = require('@/assets/images/stickers/dominatrix.png');
+const maleIcon = require('@/assets/images/stickers/Cute-creatures/man-suit-character.png');
 
 const getPhaseForDay = (dayNumber: number): keyof typeof STRATEGIC_PHRASES => {
   if (dayNumber <= 14) return 'The Soil';
@@ -39,48 +38,44 @@ export default function DailyPhrasePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [congratulatoryName, setCongratulatoryName] = useState<string | null>(null);
+    
+    const revealAnim = useRef(new Animated.Value(0)).current;
 
     const primaryColor = useThemeColor({}, 'primary');
     const textColor = useThemeColor({}, 'text');
     const cardColor = useThemeColor({}, 'card');
     const mutedForeground = useThemeColor({}, 'mutedForeground');
-    const destructiveColor = useThemeColor({}, 'destructive');
     const backgroundColor = useThemeColor({}, 'background');
     
+    // Soft, Romantic Palette
+    const softPink = '#FFF0F5'; // LavenderBlush
+    const romanticRose = '#FFB6C1'; // LightPink
+    const deepMagenta = '#D81B60';
+
     const partnerPossessive = gender === 'woman' ? 'his' : 'her';
-    const character = gender === 'man' ? maleCharacter : femaleCharacter;
+    const character = gender === 'woman' ? dominatrixIcon : maleIcon;
 
     useEffect(() => {
         const setupPhrase = async () => {
             if (!gender || !horizonStartDate) return;
-    
             setIsLoading(true);
-            setError(null);
-    
             try {
-                // --- NAME LOGIC ---
-                // This is the name the PARTNER calls the USER.
                 let name = "Love";
                 if (gender === 'woman') {
-                    // User is woman. Partner is man. Man calls user 'manCallsWomanNames'
                     const shuffledName = await smartShuffle('manCallsWomanNames', manCallsWomanNames);
                     name = shuffledName || "Mistress"; 
                 } else {
-                    // User is man. Partner is woman. Woman calls user 'womanCallsManNames'
                     const shuffledName = await smartShuffle('womanCallsManNames', womanCallsManNames);
                     name = shuffledName || "Slave";
                 }
                 setCongratulatoryName(name);
-    
-                // --- DATE LOGIC ---
+
                 const daysIntoCycle = Math.floor((new Date().getTime() - new Date(horizonStartDate).getTime()) / (1000 * 3600 * 24));
-                
                 if (daysIntoCycle > TOTAL_CYCLE_DAYS) {
                     await advanceToNextHorizon();
                     return; 
                 }
-    
-                // --- PHRASE SELECTION LOGIC ---
+
                 const storedPhrase = await AsyncStorage.getItem(getPhraseKey());
                 if (storedPhrase) {
                     setPhrase(JSON.parse(storedPhrase));
@@ -88,26 +83,21 @@ export default function DailyPhrasePage() {
                     if (completedStatus === 'true') {
                         setIsCompleted(true);
                         setIsRevealed(true);
+                        revealAnim.setValue(1);
                     }
                 } else {
                     const phase = getPhaseForDay(daysIntoCycle);
-                    
-                    /** * FIX: FLIP THE DIRECTION 
-                     * If gender is 'woman' (Dominant), she needs the phrases where the 
-                     * speaker is addressing a woman leader (currently labeled 'Man to Woman').
-                     */
                     const userDirection = gender === 'woman' ? 'Man to Woman' : 'Woman to Man';
-                    
                     const relevantPhrases = STRATEGIC_PHRASES[phase]?.filter(p => p.direction === userDirection) || [];
-    
-                    if (relevantPhrases.length === 0) {
-                        setError("Could not find a suitable whisper for today.");
-                    } else {
+
+                    if (relevantPhrases.length > 0) {
                         const newPhrase = await smartShuffle(getPhraseKey(), relevantPhrases);
                         if (newPhrase) {
                             await AsyncStorage.setItem(getPhraseKey(), JSON.stringify(newPhrase));
                             setPhrase(newPhrase);
                         }
+                    } else {
+                        setError("Searching for the perfect whisper...");
                     }
                 }
             } catch (err) {
@@ -120,11 +110,17 @@ export default function DailyPhrasePage() {
         setupPhrase();
     }, [gender, horizonStartDate, currentHorizonIndex]);
 
-    if (!userIsKnown) {
-         return <UserOnboarding />;
-    }
+    if (!userIsKnown) return <UserOnboarding />;
 
-    const handleReveal = () => setIsRevealed(true);
+    const handleReveal = () => {
+        setIsRevealed(true);
+        Animated.spring(revealAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 15,
+            friction: 8
+        }).start();
+    };
 
     const handleComplete = async () => {
         setIsCompleted(true);
@@ -135,25 +131,7 @@ export default function DailyPhrasePage() {
     if (isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor, justifyContent: 'center' }]}>
-                <ActivityIndicator size="large" color={primaryColor} />
-                <Text style={{ color: textColor, marginTop: 16 }}>Crafting your daily whisper...</Text>
-            </SafeAreaView>
-        );
-    }
-
-    if (error) {
-        return (
-            <SafeAreaView style={[styles.container, { backgroundColor, justifyContent: 'center' }]}>
-                <AlertTriangle size={48} color={destructiveColor} />
-                <Text style={{ color: destructiveColor, marginTop: 16, textAlign: 'center', paddingHorizontal: 20 }}>{error}</Text>
-            </SafeAreaView>
-        );
-    }
-
-    if (!phrase) {
-         return (
-            <SafeAreaView style={[styles.container, { backgroundColor, justifyContent: 'center' }]}>
-                <Text style={{ color: textColor, textAlign: 'center' }}>No whisper available.</Text>
+                <ActivityIndicator size="large" color={deepMagenta} />
             </SafeAreaView>
         );
     }
@@ -161,47 +139,71 @@ export default function DailyPhrasePage() {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor }]} edges={['top']}>
             <ScrollView contentContainerStyle={styles.contentContainer}>
-                <Text style={[styles.headerTitle, { color: textColor }]}>A Whisper for <Text style={{ color: primaryColor }}>{partnerName}</Text></Text>
                 
-                <View style={{position: 'relative', width: '100%', alignItems: 'center'}}>
-                    <Image source={character} style={styles.character} />
-                    <Card style={[styles.card, { backgroundColor: cardColor }]}>
-                        {!isRevealed ? (
-                            <TouchableOpacity onPress={handleReveal} style={styles.revealContainer} activeOpacity={0.8}>
-                                <Gift size={width * 0.2} color={primaryColor} />
-                                <Text style={[styles.revealText, { color: primaryColor }]}>Tap to Reveal</Text>
-                                <Text style={[styles.revealSubtext, { color: mutedForeground }]}>Your secret phrase for the day is waiting.</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <View style={styles.revealedContent}>
-                                <Heart size={width * 0.15} color={primaryColor} fill={primaryColor} style={styles.icon} />
-                                <Text style={[styles.phraseText, { color: textColor }]}>"{phrase.phrase}"</Text>
-                                <View style={styles.whenContainer}>
-                                    <Clock size={20} color={mutedForeground} />
-                                    <Text style={[styles.whenText, { color: mutedForeground }]}>{phrase.when}</Text>
-                                </View>
-                            </View>
-                        )}
-                    </Card>
+                {/* Header CTA with Soft Colors */}
+                <View style={[styles.headerCTA, { backgroundColor: softPink }]}>
+                    <Image source={character} style={styles.headerIcon} resizeMode="contain" />
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: 'Playfair-Display', fontSize: 18, fontWeight: 'bold', color: deepMagenta }}>
+                            {isCompleted ? "Beautifully Spoken" : "A Secret for You"}
+                        </Text>
+                        <Text style={{ fontFamily: 'PT-Sans', color: deepMagenta, fontSize: 13, marginTop: 2, opacity: 0.8 }}>
+                            {isCompleted 
+                                ? `You've planted a seed of desire in ${partnerName}'s heart.` 
+                                : "Whisper these words and watch the fire grow."}
+                        </Text>
+                    </View>
                 </View>
 
-                {isRevealed && (
-                    <View style={styles.buttonContainer}>
-                        {isCompleted ? (
-                            <View style={styles.completedContainer}>
-                                <CheckCircle size={24} color="#2ecc71" />
-                                <Text style={styles.completedText}>
-                                    Your whisper is {partnerPossessive} now.{'\n'}
-                                    You are {partnerPossessive} <Text style={{ fontStyle: 'italic', fontWeight: 'bold' }}>{congratulatoryName}</Text>.
+                <View style={styles.mainContent}>
+                    {!isRevealed ? (
+                        <TouchableOpacity onPress={handleReveal} activeOpacity={0.9} style={styles.revealWrapper}>
+                            <Card style={[styles.giftCard, { backgroundColor: cardColor, borderColor: romanticRose }]}>
+                                <Sparkles size={60} color={romanticRose} style={{ marginBottom: 20 }} />
+                                <Text style={[styles.revealTitle, { color: deepMagenta }]}>Tap to Unlock</Text>
+                                <Text style={[styles.revealSubtitle, { color: mutedForeground }]}>A tactical whisper crafted for {partnerName}'s heart.</Text>
+                            </Card>
+                        </TouchableOpacity>
+                    ) : (
+                        <Animated.View style={[styles.revealedWrapper, { opacity: revealAnim, transform: [{ scale: revealAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] }]}>
+                             <Card style={[styles.phraseCard, { backgroundColor: '#FFF5F7' }]}>
+                                <Heart size={36} color={romanticRose} fill={romanticRose} style={{ marginBottom: 20 }} />
+                                <Text style={[styles.phraseText, { color: '#4A4A4A' }]}>
+                                    "{phrase?.phrase}"
                                 </Text>
-                            </View>
-                        ) : (
-                            <Button onPress={handleComplete} style={{ width: '100%' }}>
-                                <Text style={{ color: 'white', fontWeight: 'bold' }}>I whispered it!</Text>
-                            </Button>
-                        )}
-                    </View>
-                )}
+                                
+                                <View style={{ width: '100%', marginTop: 10 }}>
+                                    <Text style={{ fontFamily: 'PT-Sans', fontSize: 12, color: deepMagenta, opacity: 0.6, marginBottom: 6, fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center' }}>
+                                        When to say it...
+                                    </Text>
+                                    <View style={[styles.whenBox, { backgroundColor: '#FFEDF2' }]}>
+                                        <Clock size={16} color={deepMagenta} style={{ opacity: 0.7 }} />
+                                        <Text style={[styles.whenText, { color: '#6D6D6D' }]}>
+                                            {phrase?.when}
+                                        </Text>
+                                    </View>
+                                </View>
+                             </Card>
+
+                             <View style={styles.actionContainer}>
+                                {isCompleted ? (
+                                    <View style={[styles.completedBox, { backgroundColor: '#F0FFF0' }]}>
+                                        <CheckCircle size={24} color="#2E7D32" />
+                                        <Text style={[styles.completedText, { color: '#2E7D32' }]}>
+                                            The mystery is delivered. {partnerName} now holds your heart a little tighter. 
+                                            You are {partnerPossessive} <Text style={{ fontWeight: 'bold' }}>{congratulatoryName}</Text>.
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <TouchableOpacity onPress={handleComplete} style={[styles.completeButton, { backgroundColor: deepMagenta }]}>
+                                        <Text style={styles.completeButtonText}>I Whispered It</Text>
+                                    </TouchableOpacity>
+                                )}
+                             </View>
+                        </Animated.View>
+                    )}
+                </View>
+
             </ScrollView>
             <HeartAnimation trigger={showHearts} onComplete={() => setShowHearts(false)} />
         </SafeAreaView>
@@ -210,111 +212,85 @@ export default function DailyPhrasePage() {
 
 const styles = StyleSheet.create({
     container: { flex: 1 },
-    contentContainer: {
-        padding: 24,
-        paddingBottom: 100, // Extra padding for bottom tabs/scroll
+    contentContainer: { paddingBottom: 100 },
+    headerCTA: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100%',
+        padding: 20,
+        margin: 20,
+        borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 3,
     },
-    headerTitle: {
-        fontSize: 32,
-        fontFamily: 'Playfair-Display',
-        fontWeight: '800',
-        textAlign: 'center',
-        marginBottom: 32,
-    },
-    card: {
+    headerIcon: { width: 60, height: 60, marginRight: 15 },
+    mainContent: { paddingHorizontal: 20, alignItems: 'center' },
+    revealWrapper: { width: '100%', marginTop: 10 },
+    giftCard: {
         width: '100%',
-        maxWidth: 400,
-        minHeight: 300, // Ensure minimum height
-        borderRadius: 24,
-        justifyContent: 'center',
+        padding: 40,
+        borderRadius: 30,
         alignItems: 'center',
-        padding: 32,
-        marginBottom: 24,
-    },
-    character: {
-        position: 'absolute',
-        top: -25,
-        left: -15,
-        width: 80,
-        height: 80,
-        zIndex: 10,
-        transform: [{ rotate: '-20deg' }]
-    },
-    revealContainer: {
         justifyContent: 'center',
-        alignItems: 'center',
+        borderStyle: 'dashed',
+        borderWidth: 1.5,
+    },
+    revealTitle: { fontFamily: 'Playfair-Display', fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
+    revealSubtitle: { fontFamily: 'PT-Sans', fontSize: 15, textAlign: 'center', opacity: 0.7 },
+    revealedWrapper: { width: '100%', alignItems: 'center' },
+    phraseCard: {
         width: '100%',
-        height: '100%',
-    },
-    revealText: {
-        fontSize: 24,
-        fontFamily: 'Playfair-Display',
-        fontWeight: 'bold',
-        marginTop: 20,
-    },
-    revealSubtext: {
-        fontSize: 16,
-        fontFamily: 'PT-Sans',
-        marginTop: 12,
-        textAlign: 'center',
-        opacity: 0.8,
-    },
-    revealedContent: {
-        justifyContent: 'center',
+        padding: 30,
+        borderRadius: 30,
         alignItems: 'center',
-        width: '100%',
-    },
-    icon: {
-        marginBottom: 24,
+        marginTop: 10,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 5,
+        borderWidth: 1,
+        borderColor: '#FFE4E1',
     },
     phraseText: {
-        fontSize: 22,
         fontFamily: 'PT-Sans',
+        fontSize: 19,
+        lineHeight: 28,
         textAlign: 'center',
         fontStyle: 'italic',
-        lineHeight: 34,
-        marginBottom: 24,
+        marginBottom: 25,
     },
-    whenContainer: {
+    whenBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 8,
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: 12,
-        backgroundColor: 'rgba(0,0,0,0.05)',
+        padding: 12,
+        borderRadius: 15,
         width: '100%',
-    },
-    whenText: {
-        marginLeft: 10,
-        fontFamily: 'PT-Sans',
-        fontSize: 15,
-        flex: 1, 
-        textAlign: 'center',
-    },
-    buttonContainer: {
-        marginTop: 8,
-        width: '100%',
-        maxWidth: 400,
-    },
-    completedContainer: {
-        flexDirection: 'row',
         justifyContent: 'center',
+    },
+    whenText: { marginLeft: 10, fontFamily: 'PT-Sans', fontSize: 13, flex: 1, textAlign: 'center' },
+    actionContainer: { width: '100%', marginTop: 25 },
+    completeButton: {
+        width: '100%',
+        padding: 18,
+        borderRadius: 15,
         alignItems: 'center',
-        padding: 16,
-        backgroundColor: 'rgba(46, 204, 113, 0.1)',
-        borderRadius: 12,
+        shadowColor: "#D81B60",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    completeButtonText: { color: '#fff', fontSize: 17, fontWeight: 'bold', fontFamily: 'PT-Sans' },
+    completedBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 20,
+        borderRadius: 15,
         width: '100%',
+        justifyContent: 'center',
     },
-    completedText: {
-        color: '#2ecc71',
-        fontWeight: 'bold',
-        marginLeft: 8,
-        fontSize: 16,
-        textAlign: 'center',
-    },
+    completedText: { marginLeft: 10, fontFamily: 'PT-Sans', fontSize: 15, textAlign: 'center' },
 });
